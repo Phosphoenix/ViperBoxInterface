@@ -12,3 +12,4 @@ Settings/
 logs/
 Stimulations/
 untracked/
+defaults/__pycache__
