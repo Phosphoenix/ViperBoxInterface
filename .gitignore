@@ -3,7 +3,6 @@ __pycache__/*
 .ruff_cache
 .ipynb_checkpoints/
 .pre-commit-config.yaml
-.gitignore
 
 docs/
 Recordings/
@@ -11,5 +10,3 @@ Settings/
 logs/
 Stimulations/
 untracked/
-
-asdf*
