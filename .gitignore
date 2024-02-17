@@ -5,6 +5,7 @@ __pycache__/*
 .pre-commit-config.yaml
 
 start_app.bat
+*.ipynb
 
 docs/
 Recordings/
