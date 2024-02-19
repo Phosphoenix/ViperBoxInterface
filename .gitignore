@@ -2,10 +2,11 @@ __pycache__/*
 .pytest_cache
 .ruff_cache
 .ipynb_checkpoints/
-.pre-commit-config.yaml
 
 start_app.bat
 *.ipynb
+gold_ui.py
+gui.py
 
 docs/
 Recordings/
