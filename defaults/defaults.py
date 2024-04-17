@@ -81,10 +81,10 @@ class Mappings:
 
     @property
     def probe_to_os_map(self):
-        logger.info(
-            f"probe to os map: "
-            f"{self.stim_mapping.set_index('Probe electrode')['EL_PAD#'].to_dict()}"
-        )
+        # logger.info(
+        #     f"probe to os map: "
+        #     f"{self.stim_mapping.set_index('Probe electrode')['EL_PAD#'].to_dict()}"
+        # )
         return self.stim_mapping.set_index("Probe electrode")["EL_PAD#"].to_dict()
 
 

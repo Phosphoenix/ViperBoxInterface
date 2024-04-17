@@ -121,6 +121,10 @@ was {type(value)}: {e}"
 
 @dataclass
 class ProbeSettings:
+    """
+    Should all be 0 indexed
+    """
+
     channel: Dict[int, ChanSettings] = field(default_factory=dict)
     stim_unit_sett: Dict[int, SUSettings] = field(default_factory=dict)
     stim_unit_os: Dict[int, List[int]] = field(default_factory=dict)
@@ -315,8 +319,8 @@ def dict_to_dataclass(cls: Any, dict_obj: Any) -> Any:
 def parse_numbers(
     numstr: str, all_values: list[int], treat_dash: list[int] = []
 ) -> list[int]:
-    """Parse a string of numbers, converts to 0 indexed and compare to an
-    available list.
+    """Parse a string of numbers, converts that string to 0 indexed and compare to an
+    available list that is 0 indexed.
 
     If the format is wrong or if the numbers are not in the list, raise an error.
     These are inputs like: '1,2,3,4-6,8' or '-' for all possible values.

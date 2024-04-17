@@ -79,6 +79,10 @@ class ViperBox:
         self.logger.addHandler(socketHandler)
         self.mtx = self._os2chip_mat()
 
+        oss = [int(item + 1) for item in range(60)]
+        oss = [self.mapping.probe_to_os_map[channel] for channel in oss]
+        self.check_os = oss
+
         return None
 
     def connect_oe(self, reset=False) -> Tuple[bool, str]:
@@ -397,6 +401,34 @@ to ViperBox"
                 if not self.emulation:
                     NVP.writeChannelConfiguration(self._box_ptrs[box], probe, False)
 
+    def set_check_os(self, oss) -> Tuple[bool, str]:
+        """Set the check OS for the stimulation settings."""
+        probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
+        oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
+        self.check_os = oss
+        return True, f"Check OS set to {oss}"
+
+    # def check_SR(self, lst):
+
+    #     #Send/receive a single "SPI" command
+    #     #lst    : 1-dimensional list "TX"
+    #     #Return : 1-dimensional list "RX", or [] in case of error
+    #     box=0
+    #     probe= 0
+    #     reply = []
+    #     if lst == []:
+    #         print("!! Empty command")
+    #     else:                               #list  format e.g. [2,3,252,...]
+    #         tx = bytes(lst)                 #bytes
+    # format e.g. b'\x02\x03\xFC...' (immutable)
+    #         try:
+    #             rx = NVP.transferSPI(self._box_ptrs[box], probe, tx)
+    #             print('.')
+    #             reply = list(rx)
+    #         except Exception as err:
+    #             print("!! API SPI error:", err)
+    #     return reply
+
     def _upload_stimulation_settings(self, updated_tmp_settings: GeneralSettings):
         self.logger.info(
             f"Writing stimulation settings to ViperBox: {updated_tmp_settings}"
@@ -415,22 +447,34 @@ settings to ViperBox"
                     probe,
                     updated_tmp_settings.boxes[box].probes[probe].os_data,
                 )
-                for OS in range(128):
-                    NVP.setOSDischargeperm(self._box_ptrs[box], probe, OS, False)
-                    NVP.setOSStimblank(self._box_ptrs[box], probe, OS, True)
+                for OStage in range(128):
+                    if OStage not in self.check_os:
+                        self.logger.debug(
+                            f"Setting permanent discharge on OS {OStage} to False"
+                        )
+                        NVP.setOSDischargeperm(
+                            self._box_ptrs[box], probe, OStage, False
+                        )
+                    else:
+                        self.logger.debug(
+                            f"Setting permanent discharge on OS {OStage} to True"
+                        )
+                        NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, True)
+                    # NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, False)
+                    NVP.setOSStimblank(self._box_ptrs[box], probe, OStage, True)
 
-            for SU in (
-                updated_tmp_settings.boxes[box].probes[probe].stim_unit_sett.keys()
-            ):
-                NVP.writeSUConfiguration(
-                    self._box_ptrs[box],
-                    probe,
-                    SU,
-                    *updated_tmp_settings.boxes[box]
-                    .probes[probe]
-                    .stim_unit_sett[SU]
-                    .SUConfig(),
-                )
+                for SU in (
+                    updated_tmp_settings.boxes[box].probes[probe].stim_unit_sett.keys()
+                ):
+                    NVP.writeSUConfiguration(
+                        self._box_ptrs[box],
+                        probe,
+                        SU,
+                        *updated_tmp_settings.boxes[box]
+                        .probes[probe]
+                        .stim_unit_sett[SU]
+                        .SUConfig(),
+                    )
 
     def recording_settings(
         self,
@@ -1079,11 +1123,11 @@ settings first""",
         # write triggers to stimrec
 
         # SU_dict = {0: {0: [0,1,2], 1: [3,4,6]}}
+        # SU_dict = {box: {probe: [SU_list in binary format]}}
         SU_dict: Any = {}
         # Check if boxes, probes and SUs are in right format and properly configured
         # i.e, have waveform configured
         # Using try/except to catch ValueError from parse_numbers
-        self.logger.info("Check if boxes, probes and SUs exist and are configured")
         for box in parse_numbers(boxes, list(self.uploaded_settings.boxes.keys())):
             SU_dict[box] = {}
             for probe in parse_numbers(
@@ -1100,6 +1144,19 @@ settings first""",
                         ),
                     )
                 )
+                SUs = [
+                    index + 1
+                    for index, char in enumerate(bin(SU_dict[box][probe])[2:])
+                    if char == "1"
+                ]
+                self.logger.info(
+                    f"Starting stimulation on box {box}, probe {probe}, SU's {SUs}"
+                )
+                for SU in SUs:
+                    probe_info = self.uploaded_settings.boxes[box].probes[probe]
+                    self.logger.debug(
+                        f"On electrodes: {probe_info.stim_unit_os[int(SU)-1]}"
+                    )
 
         #                 except ValueError as e:
         #                     return_statement = "SU settings not available on probe "
@@ -1170,7 +1227,7 @@ settings first""",
                     start_dt_times[box][probe][1],
                 )
 
-        return_statement = f"Stimulation started on boxes {boxes} probe {probes} \
+        return_statement = f"Stimulation started on box {boxes}, probe {probes} \
 for SU's {SU_dict}"
         return True, return_statement
 

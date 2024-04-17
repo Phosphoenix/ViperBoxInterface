@@ -80,6 +80,16 @@ app = FastAPI(
 VB = ViperBox(_session_datetime=session_datetime, start_oe=True)
 
 
+@app.post("/setos")
+async def setos(oss: str):
+    logger.info(f"/setos called with {oss}")
+    if oss == "all":
+        VB.set_check_os([int(item + 1) for item in range(60)])
+    else:
+        VB.set_check_os([int(item) for item in oss.split(",")])
+    return {"success": True, "feedback": f"Set OS to {oss}"}
+
+
 @app.post("/connect")  # , tags=["connect"])
 async def init(connect: Connect):
     """
@@ -345,7 +355,7 @@ async def root():
 
 
 def self_terminate():
-    time.sleep(2)
+    # time.sleep(2)
     parent = psutil.Process(psutil.Process(os.getpid()).ppid())
     parent.kill()
 
