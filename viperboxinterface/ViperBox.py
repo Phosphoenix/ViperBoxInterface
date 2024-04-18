@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import logging
 import logging.handlers
@@ -7,24 +9,12 @@ import threading
 import time
 import traceback
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 import requests
 from lxml import etree
 from scipy import signal
-
-import NeuraviperPy as NVP
-from defaults.defaults import Mappings
-from VB_classes import (
-    BoxSettings,
-    ConnectedBoxes,
-    ConnectedProbes,
-    GeneralSettings,
-    ProbeSettings,
-    StatusTracking,
-    parse_numbers,
-)
 from XML_handler import (
     add_to_stimrec,
     check_xml_boxprobes_exist_and_verify_data_with_settings,
@@ -32,6 +22,18 @@ from XML_handler import (
     update_settings_with_XML,
     verify_params,
     verify_step_min_max,
+)
+
+import viperboxinterface.NeuraviperPy as NVP
+from viperboxinterface.defaults.defaults import Mappings
+from viperboxinterface.VB_classes import (
+    BoxSettings,
+    ConnectedBoxes,
+    ConnectedProbes,
+    GeneralSettings,
+    ProbeSettings,
+    StatusTracking,
+    parse_numbers,
 )
 
 # TODO: implement rotation of logs to not hog up memory
@@ -74,7 +76,8 @@ class ViperBox:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         socketHandler = logging.handlers.SocketHandler(
-            "localhost", logging.handlers.DEFAULT_TCP_LOGGING_PORT
+            "localhost",
+            logging.handlers.DEFAULT_TCP_LOGGING_PORT,
         )
         self.logger.addHandler(socketHandler)
         self.mtx = self._os2chip_mat()
@@ -85,9 +88,10 @@ class ViperBox:
 
         return None
 
-    def connect_oe(self, reset=False) -> Tuple[bool, str]:
+    def connect_oe(self, reset=False) -> tuple[bool, str]:
         """
         Check if Open Ephys is running and start it if not.
+
         Connect once TCP to Open Ephys once it started, send some data and maybe wait
         for a connections response.
 
@@ -96,7 +100,6 @@ class ViperBox:
         - Data thread existing
         - Connected
         """
-
         # Start OE
         self.logger.info("Checking if Open Ephys is running")
         try:
@@ -114,7 +117,10 @@ class ViperBox:
             self.logger.info("Data thread exists")
         else:
             self.data_thread = _DataSenderThread(
-                self.NUM_SAMPLES, self.FREQ, self.NUM_CHANNELS, self.mtx
+                self.NUM_SAMPLES,
+                self.FREQ,
+                self.NUM_CHANNELS,
+                self.mtx,
             )
             self.data_thread.start("", 0, empty=True)
             r = requests.put(
@@ -128,7 +134,10 @@ class ViperBox:
         if reset:
             self.data_thread.shutdown()
             self.data_thread = _DataSenderThread(
-                self.NUM_SAMPLES, self.FREQ, self.NUM_CHANNELS, self.mtx
+                self.NUM_SAMPLES,
+                self.FREQ,
+                self.NUM_CHANNELS,
+                self.mtx,
             )
             self.data_thread.start("", 0, empty=True)
             r = requests.put(
@@ -156,7 +165,7 @@ class ViperBox:
         probe_list: str = "1",
         emulation: bool = False,
         boxless: bool = False,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """Initiates ViperBox and connects to probes. Box is created and emulation\
         type is set.
 
@@ -168,7 +177,7 @@ class ViperBox:
         self.emulation = emulation
         self.logger.info(
             f"ViperBox connect: probe list: {probe_list}, emulation: {self.emulation}, \
-boxless: {boxless}."
+boxless: {boxless}.",
         )
 
         # Checks if the ViperBox is connected and connects if not.
@@ -220,11 +229,10 @@ boxless: {boxless}."
             # TODO add box settings and info and stuffff
             self.local_settings.boxes[0] = BoxSettings()
             self.connected.boxes[0] = ConnectedProbes()
-            pass
         else:
             self.logger.info(
                 "Unknown error, please restart the ViperBox or check the \
-                logs for more information"
+                logs for more information",
             )
             return False, "Unknown error, please check the logs for more information"
         self.tracking.box_connected = True
@@ -242,10 +250,12 @@ boxless: {boxless}."
             self.emulation is True
         ):  # Choose linear ramp emulation (1 sample shift between channels)
             NVP.setDeviceEmulatorMode(
-                self._box_ptrs[box], NVP.DeviceEmulatorMode.STATIC
+                self._box_ptrs[box],
+                NVP.DeviceEmulatorMode.STATIC,
             )
             NVP.setDeviceEmulatorType(
-                self._box_ptrs[box], NVP.DeviceEmulatorType.EMULATED_PROBE
+                self._box_ptrs[box],
+                NVP.DeviceEmulatorType.EMULATED_PROBE,
             )
             self.logger.info("Emulation mode: linear ramp")
         else:
@@ -275,7 +285,7 @@ boxless: {boxless}."
                 self.connected.boxes[0].probes[probe] = True
             except Exception as error:
                 self.logger.warning(
-                    f"!! Init() exception error, probe {probe}: {self._er(error)}"
+                    f"!! Init() exception error, probe {probe}: {self._er(error)}",
                 )
         self.logger.info(f"API channel opened: {devices[0]}")
         self._deviceId = devices[0].ID
@@ -290,7 +300,7 @@ boxless: {boxless}."
 {self.local_settings.connected}""",
         )
 
-    def disconnect(self) -> Tuple[bool, str]:
+    def disconnect(self) -> tuple[bool, str]:
         """Disconnects from the ViperBox and closes the API channel."""
         try:
             self.data_thread.shutdown()
@@ -315,7 +325,7 @@ boxless: {boxless}."
         except KeyError as e:
             self.logger.debug(
                 f"Can't disconnect from ViperBox, no ViperBox connection. \
-Error: {self._er(e)}"
+Error: {self._er(e)}",
             )
             return (
                 False,
@@ -325,7 +335,7 @@ Please restart the ViperBox and the software and try again.",
 
         return True, "ViperBox disconnected"
 
-    def shutdown(self) -> Tuple[bool, str]:
+    def shutdown(self) -> tuple[bool, str]:
         self.disconnect()
         # if not self.headless:
         # try:
@@ -350,7 +360,7 @@ Please restart the ViperBox and the software and try again.",
         if self.boxless is True:
             self.logger.info(
                 "No box connected, skipping uploading recording settings \
-to ViperBox"
+to ViperBox",
             )
             return
 
@@ -391,17 +401,20 @@ to ViperBox"
                         .gain,
                     )
                     NVP.setAZ(
-                        self._box_ptrs[box], probe, channel, False
+                        self._box_ptrs[box],
+                        probe,
+                        channel,
+                        False,
                     )  # see email Patrick 08/01/2024
 
                 self.logger.debug(
                     f"Writing Channel config: \
-{updated_tmp_settings.boxes[box].probes[probe]}"
+{updated_tmp_settings.boxes[box].probes[probe]}",
                 )
                 if not self.emulation:
                     NVP.writeChannelConfiguration(self._box_ptrs[box], probe, False)
 
-    def set_check_os(self, oss) -> Tuple[bool, str]:
+    def set_check_os(self, oss) -> tuple[bool, str]:
         """Set the check OS for the stimulation settings."""
         probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
         oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
@@ -431,12 +444,12 @@ to ViperBox"
 
     def _upload_stimulation_settings(self, updated_tmp_settings: GeneralSettings):
         self.logger.info(
-            f"Writing stimulation settings to ViperBox: {updated_tmp_settings}"
+            f"Writing stimulation settings to ViperBox: {updated_tmp_settings}",
         )
         if self.boxless is True:
             self.logger.info(
                 "No box connected, skipping uploading stimulation \
-settings to ViperBox"
+settings to ViperBox",
             )
             return
         for box in updated_tmp_settings.boxes.keys():
@@ -482,9 +495,8 @@ settings to ViperBox"
         reset: bool = False,
         default_values: bool = False,
         read_mapping_xlsx: bool = False,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """Loads the recording settings from an XML string or default file."""
-
         if self.boxless is True:
             pass
         elif self.tracking.box_connected is False:
@@ -513,7 +525,10 @@ custom XML settings, use the verify_xml API call.",
 
         self.logger.debug(f"Checking XML with settings: {tmp_local_settings}")
         result, feedback = check_xml_boxprobes_exist_and_verify_data_with_settings(
-            XML_data, tmp_local_settings, self.connected, "recording"
+            XML_data,
+            tmp_local_settings,
+            self.connected,
+            "recording",
         )
         # result, feedback = check_xml_with_settings(
         #     XML_data, tmp_local_settings, "recording"
@@ -528,7 +543,9 @@ custom XML settings, use the verify_xml API call.",
         # add connected boxes and probes to tmp_local_settings
 
         updated_tmp_settings = update_settings_with_XML(
-            XML_data, tmp_local_settings, "recording"
+            XML_data,
+            tmp_local_settings,
+            "recording",
         )
 
         try:
@@ -549,7 +566,7 @@ reverted to previous settings. Error: {self._er(e)}",
 
     def _stimrec_write_recording_settings(self, settings_to_write, start_time, dt_time):
         self.logger.info(
-            f"Writing recording settings to stimrec file: {settings_to_write}"
+            f"Writing recording settings to stimrec file: {settings_to_write}",
         )
 
         # for box in updated_tmp_settings.boxes.keys():
@@ -576,10 +593,13 @@ reverted to previous settings. Error: {self._er(e)}",
         #                 )
 
     def _stimrec_write_stimulation_settings(
-        self, updated_tmp_settings, start_time, dt_time
+        self,
+        updated_tmp_settings,
+        start_time,
+        dt_time,
     ):
         self.logger.info(
-            f"Writing stimulation settings to stimrec file: {updated_tmp_settings}"
+            f"Writing stimulation settings to stimrec file: {updated_tmp_settings}",
         )
         if self.stim_file_path:
             for box in updated_tmp_settings.boxes.keys():
@@ -632,9 +652,8 @@ reverted to previous settings. Error: {self._er(e)}",
         xml_string: str | None = None,
         reset: bool = False,
         default_values: bool = True,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """Loads the stimulation settings from an XML file."""
-
         if self.boxless is True:
             pass
         elif self.tracking.box_connected is False:
@@ -654,7 +673,10 @@ reverted to previous settings. Error: {self._er(e)}",
         tmp_local_settings = copy.deepcopy(self.local_settings)
 
         result, feedback = check_xml_boxprobes_exist_and_verify_data_with_settings(
-            XML_data, tmp_local_settings, self.connected, "stimulation"
+            XML_data,
+            tmp_local_settings,
+            self.connected,
+            "stimulation",
         )
         # result, feedback = check_xml_with_settings(
         #     XML_data, tmp_local_settings, "stimulation"
@@ -667,7 +689,9 @@ reverted to previous settings. Error: {self._er(e)}",
             tmp_local_settings.reset_stimulation_settings()
 
         updated_tmp_settings = update_settings_with_XML(
-            XML_data, tmp_local_settings, "stimulation"
+            XML_data,
+            tmp_local_settings,
+            "stimulation",
         )
 
         # TODO boxfix: also loop over boxes
@@ -700,10 +724,12 @@ reverted to previous settings. Error: {self._er(e)}",
         return True, "Stimulation settings loaded"
 
     def verify_xml_with_local_settings(
-        self, XML_dictionary: dict, XML_data: Any, check_topic: str = "all"
-    ) -> Tuple[bool, str]:
+        self,
+        XML_dictionary: dict,
+        XML_data: Any,
+        check_topic: str = "all",
+    ) -> tuple[bool, str]:
         """API Verifies the XML string."""
-
         tmp_data = copy.deepcopy(self.local_settings)
 
         if XML_dictionary != {}:
@@ -723,7 +749,10 @@ reverted to previous settings. Error: {self._er(e)}",
             return True, f"Verify xml call with dictionary: {XML_dictionary}"
         elif XML_data != "":
             result, feedback = check_xml_boxprobes_exist_and_verify_data_with_settings(
-                XML_data, tmp_data, self.connected, "all"
+                XML_data,
+                tmp_data,
+                self.connected,
+                "all",
             )
             # result, feedback = check_xml_with_settings(
             #     XML_data, tmp_data, check_topic, self.boxless
@@ -734,9 +763,8 @@ reverted to previous settings. Error: {self._er(e)}",
         # TODO:
         return result, feedback
 
-    def default_settings(self) -> Tuple[bool, str]:
+    def default_settings(self) -> tuple[bool, str]:
         """Loads the default settings from an XML file."""
-
         if self.boxless is True:
             pass
         elif self.tracking.box_connected is False:
@@ -754,7 +782,10 @@ to load default settings""",
         tmp_local_settings = copy.deepcopy(self.local_settings)
 
         result, feedback = check_xml_boxprobes_exist_and_verify_data_with_settings(
-            XML_data, tmp_local_settings, self.connected, "all"
+            XML_data,
+            tmp_local_settings,
+            self.connected,
+            "all",
         )
         # result, feedback =
         # check_xml_with_settings(XML_data, tmp_local_settings, "all")
@@ -765,10 +796,14 @@ to load default settings""",
         tmp_local_settings.reset_probe_settings()
 
         updated_tmp_settings = update_settings_with_XML(
-            XML_data, tmp_local_settings, "recording"
+            XML_data,
+            tmp_local_settings,
+            "recording",
         )
         updated_tmp_settings = update_settings_with_XML(
-            XML_data, updated_tmp_settings, "stimulation"
+            XML_data,
+            updated_tmp_settings,
+            "stimulation",
         )
 
         # TODO boxfix: also loop over boxes
@@ -804,10 +839,11 @@ reverted to previous settings. Error: {self._er(e)}",
 
         return True, "Default recording and stimulation settings loaded"
 
-    def start_recording(self, recording_name: str = "") -> Tuple[bool, str]:
+    def start_recording(self, recording_name: str = "") -> tuple[bool, str]:
         """Start recording.
 
         Arguments:
+        ---------
         - recording_name: str | None - the name of the recording, it will be
         saved in the Recordings folder. This can also be a folder path or a
         file path. If it is a folder path, the recording will be saved as
@@ -857,7 +893,7 @@ upload your custom settings and then try again.""",
         if not ("\\" in self.recording_name or "/" in self.recording_name):
             # this is a filename
             self._rec_path = rec_folder.joinpath(
-                f"{self.recording_name}_{self._recording_datetime}.bin"
+                f"{self.recording_name}_{self._recording_datetime}.bin",
             )
         elif "\\" in self.recording_name or "/" in self.recording_name:
             tmp_rec_path = Path(self.recording_name)
@@ -867,13 +903,13 @@ upload your custom settings and then try again.""",
             if tmp_rec_path.exists():
                 if tmp_rec_path.is_dir():
                     self._rec_path = tmp_rec_path.joinpath(
-                        f"unnamed_recording_{self._recording_datetime}.bin"
+                        f"unnamed_recording_{self._recording_datetime}.bin",
                     )
                 elif tmp_rec_path.is_file():
                     self._rec_path = tmp_rec_path.with_suffix(".bin")
         else:
             self._rec_path = rec_folder.joinpath(
-                f"unnamed_recording_{self._recording_datetime}.bin"
+                f"unnamed_recording_{self._recording_datetime}.bin",
             )
 
         self.logger.debug(self._box_ptrs)
@@ -905,7 +941,7 @@ upload your custom settings and then try again.""",
         create_empty_xml(self.stim_file_path)
 
         self.logger.info(
-            f"Writing recording settings to stimrec file: {self.uploaded_settings}"
+            f"Writing recording settings to stimrec file: {self.uploaded_settings}",
         )
 
         self.logger.debug("Write recording settings to stimrec")
@@ -992,7 +1028,7 @@ upload your custom settings and then try again.""",
         try:
             requests.get("http://localhost:37497/api/status", timeout=0.1)
         except Exception:
-            os.startfile("C:\Program Files\Open Ephys\open-ephys.exe")
+            os.startfile(r"C:\Program Files\Open Ephys\open-ephys.exe")
 
     def _os2chip_mat(self):
         mtx = np.zeros((64, 60), dtype="uint16")
@@ -1000,7 +1036,7 @@ upload your custom settings and then try again.""",
             mtx[k][v] = 1
         return mtx
 
-    def stop_recording(self) -> Tuple[bool, str]:
+    def stop_recording(self) -> tuple[bool, str]:
         if self.tracking.box_connected is False:
             return False, "Not connected to ViperBox"
 
@@ -1039,9 +1075,7 @@ upload your custom settings and then try again.""",
     def _convert_recording(
         self,
     ) -> None:
-        """
-        Converts the raw recording into a numpy format.
-        """
+        """Converts the raw recording into a numpy format."""
         # TODO: not implemented
 
         # convert_recording_read_handle = NVP.streamOpenFile(
@@ -1072,25 +1106,27 @@ upload your custom settings and then try again.""",
         #     databuffer = (databuffer @ mtx).T
         #     databuffer = np.multiply(databuffer, self._settings.gain_vec[:, None])
         #     self._add_to_zarr(databuffer)
-        pass
 
     def _add_to_zarr(self, databuffer: np.ndarray) -> None:
         """Adds the data to the zarr file."""
         # TODO: not implemented
-        pass
 
-    def _SU_list_to_bitmask(self, SU_list: List[int]) -> int:
+    def _SU_list_to_bitmask(self, SU_list: list[int]) -> int:
         # convert SUs to NVP format
         SU_string = "".join(["1" if i in SU_list else "0" for i in range(8)])
         return int(SU_string, 2)
 
     def start_stimulation(
-        self, boxes: str, probes: str, SU_input: str
-    ) -> Tuple[bool, str]:
+        self,
+        boxes: str,
+        probes: str,
+        SU_input: str,
+    ) -> tuple[bool, str]:
         """Starts stimulation on the specified box(s), probe(s) and SU(s).
         First checks if the SUs are configured for their respective boxes and probes.
 
         Arguments:
+        ---------
         - boxes: str - all boxes to start stimulation in
         - probes: str - all probes to start stimulation in
         - SU_input: str - the SUs to start stimulation in
@@ -1098,7 +1134,6 @@ upload your custom settings and then try again.""",
         Test:
         - Check if this also works if sus are half configured
         """
-
         if self.tracking.box_connected is False:
             return False, "Not connected to ViperBox"
 
@@ -1140,9 +1175,9 @@ settings first""",
                         list(
                             self.uploaded_settings.boxes[box]
                             .probes[probe]
-                            .stim_unit_sett.keys()
+                            .stim_unit_sett.keys(),
                         ),
-                    )
+                    ),
                 )
                 SUs = [
                     index + 1
@@ -1237,7 +1272,12 @@ for SU's {SU_dict}"
 
 class _DataSenderThread(threading.Thread):
     def __init__(
-        self, NUM_SAMPLES: int, FREQ: int, NUM_CHANNELS: int, mtx: np.ndarray, port=9001
+        self,
+        NUM_SAMPLES: int,
+        FREQ: int,
+        NUM_CHANNELS: int,
+        mtx: np.ndarray,
+        port=9001,
     ):
         super().__init__()
         self.thread = None
@@ -1250,7 +1290,8 @@ class _DataSenderThread(threading.Thread):
         self.bufferInterval = self.NUM_SAMPLES / self.FREQ
         self._prep_lfilter(f0=50.0, Q=30.0, FREQ=self.FREQ)
         self._create_header(
-            NUM_CHANNELS=self.NUM_CHANNELS, NUM_SAMPLES=self.NUM_SAMPLES
+            NUM_CHANNELS=self.NUM_CHANNELS,
+            NUM_SAMPLES=self.NUM_SAMPLES,
         )
         # if port is None:
         #     port = random.randint(1000, 9999)
@@ -1318,7 +1359,8 @@ class _DataSenderThread(threading.Thread):
                 break
 
             databuffer = np.asarray(
-                [packets[i].data for i in range(self.NUM_SAMPLES)], dtype="uint16"
+                [packets[i].data for i in range(self.NUM_SAMPLES)],
+                dtype="uint16",
             )
             databuffer, self.z = self._prepare_databuffer(databuffer, self.z)
             self.tcpClient.sendto(self.header + databuffer, self.socket_address)
@@ -1350,7 +1392,9 @@ class _DataSenderThread(threading.Thread):
         else:
             self.stop_stream = threading.Event()
             self.thread = threading.Thread(
-                target=self.send_data, args=(recording_path, probe), daemon=True
+                target=self.send_data,
+                args=(recording_path, probe),
+                daemon=True,
             )
             self.thread.start()
 

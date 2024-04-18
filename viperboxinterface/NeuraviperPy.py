@@ -35,7 +35,10 @@
 *
 * All function parameters: zero-indexed !!!
 *
-****************************************************************************"""
+****************************************************************************
+"""
+
+from __future__ import annotations
 
 import ctypes
 import logging
@@ -61,13 +64,13 @@ from enum import IntEnum
 from inspect import signature
 from sys import platform as _platform
 from types import FunctionType
-from typing import List, Tuple
 
 # logger = logging.getLogger(__name__)
 logger = logging.getLogger("NVP")
 logger.setLevel(logging.DEBUG)
 socketHandler = logging.handlers.SocketHandler(
-    "localhost", logging.handlers.DEFAULT_TCP_LOGGING_PORT
+    "localhost",
+    logging.handlers.DEFAULT_TCP_LOGGING_PORT,
 )
 logger.addHandler(socketHandler)
 
@@ -128,7 +131,8 @@ def _c_fn(*args):
 def _c_function(function_name, res_type, arg_types):
     """Create wrapped C API function.
 
-    Parameters:
+    Parameters
+    ----------
         function_name (string): Name of the function to be wrapped
         res_type (type): Type of return value
         arg_types (List[type]): List of argument types
@@ -137,15 +141,15 @@ def _c_function(function_name, res_type, arg_types):
     c_fn.restype = res_type
     c_fn.argtypes = arg_types
     logging.debug(
-        f"NVP API function {function_name} called with argument types {arg_types}"
+        f"NVP API function {function_name} called with argument types {arg_types}",
     )
     return c_fn
 
 
 def _wrap_function(function_name, res_type, arg_types):
     """Implicit wrapping of imported C function.
-    Injects `_c_fn' into the environment of wrapped function."""
-
+    Injects `_c_fn' into the environment of wrapped function.
+    """
     # Make a copy of the global environment and inject C function
     env = globals().copy()
     env["_c_fn"] = _c_function(function_name, res_type, arg_types)
@@ -178,6 +182,7 @@ class Struct(ctypes.Structure):
 
 class LogLevel(IntEnum):
     "Enumeration for logging level"
+
     VERBOSE = 5
     DEBUG = 4
     INFO = 3
@@ -188,6 +193,7 @@ class LogLevel(IntEnum):
 
 class NPPlatform(IntEnum):
     "Enumeration for Neuropixels Platform types."
+
     NONE = 0
     USB = 1
 
@@ -231,6 +237,7 @@ ElectrodeInput = c_int
 
 class BasestationID(Struct):
     "BasestationID"
+
     _fields_ = [("platformid", c_int), ("ID", c_int)]
 
 
@@ -239,6 +246,7 @@ _HARDWAREID_PN_LEN = 40
 
 class HardwareID(Struct):
     "HardwareID"
+
     _pack_ = 1
     _fields_ = [
         ("version_major", ctypes.c_uint8),
@@ -260,7 +268,7 @@ class HardwareID(Struct):
         self._product_number = value.encode("ASCII")
 
     @property
-    def version(self) -> Tuple[c_uint8, c_uint8]:
+    def version(self) -> tuple[c_uint8, c_uint8]:
         return (self.version_major, self.version_minor)
 
     @version.setter
@@ -272,6 +280,7 @@ class HardwareID(Struct):
 
 class PacketInfo(Struct):
     "PacketInfo"
+
     _fields_ = [
         ("Timestamp", ctypes.c_uint32),
         ("Status", ctypes.c_uint16),
@@ -291,6 +300,7 @@ class Packet:
 
 class DiagStats(Struct):
     "DiagStats"
+
     _fields_ = [
         ("total_bytes", ctypes.c_uint64),
         ("packet_count", ctypes.c_uint32),
@@ -371,7 +381,8 @@ error_dct = {
 def getLastError() -> str:
     """Returns last error message reported by API.
 
-    :rtype: String"""
+    :rtype: String
+    """
     buf = ctypes.create_string_buffer(256)
     _c_fn(buf, 256)
     return buf.value.decode("utf-8")
@@ -409,7 +420,8 @@ def setLogLevel(level: LogLevel) -> None:
     """
     if not isinstance(level, LogLevel):
         raise NeuraviperAPIError(
-            42, "Debug level must be set using DebugLevel enumeration!"
+            42,
+            "Debug level must be set using DebugLevel enumeration!",
         )
     _nvplib.setLogLevel(level.value)
 
@@ -420,7 +432,7 @@ def setLogLevel(level: LogLevel) -> None:
 
 
 @_wrap_function("getAPIVersion", None, [POINTER(c_int), POINTER(c_int), POINTER(c_int)])
-def getAPIVersion() -> Tuple[int, int, int]:
+def getAPIVersion() -> tuple[int, int, int]:
     """Get the API version.
 
     :return: A tuple with the major, minor, and patch version numbers
@@ -439,7 +451,7 @@ def scanBS() -> None:
 
 
 @_wrap_function("getDeviceList", c_int, [POINTER(BasestationID), c_int])
-def getDeviceList(count: int) -> List[BasestationID]:
+def getDeviceList(count: int) -> list[BasestationID]:
     """Returns a list of connected devices.
 
     :param count: Maximum number of devices to be reported
@@ -502,7 +514,9 @@ def transferSPI(handle: DeviceHandle, probe: int, buffer: bytes) -> bytes:
 
 
 @_wrap_function(
-    "writeSPI", NVP_ErrorCode, [DeviceHandle, c_uint8, POINTER(c_uint8), c_size_t]
+    "writeSPI",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, POINTER(c_uint8), c_size_t],
 )
 def writeSPI(handle: DeviceHandle, probe: int, buffer: bytes):
     size = len(buffer)
@@ -516,7 +530,10 @@ def writeSPI(handle: DeviceHandle, probe: int, buffer: bytes):
     [DeviceHandle, c_uint8, c_uint8, POINTER(c_uint8), c_size_t],
 )
 def writeI2C(
-    handle: DeviceHandle, device: int, address: int, bytearr: bytearray
+    handle: DeviceHandle,
+    device: int,
+    address: int,
+    bytearr: bytearray,
 ) -> None:
     data = (c_char * len(bytearr)).from_buffer(bytearr)
     __assertnvperror(_c_fn(handle, device, address, data, len(bytearr)))
@@ -540,7 +557,10 @@ def readI2C(handle: DeviceHandle, device: int, address: int, length: int) -> byt
     [DeviceHandle, c_int, c_uint8, c_uint8, POINTER(c_uint8), c_size_t],
 )
 def writeI2Cctrl(
-    handle: DeviceHandle, device: int, address: int, bytearr: bytearray
+    handle: DeviceHandle,
+    device: int,
+    address: int,
+    bytearr: bytearray,
 ) -> None:
     data = (c_char * len(bytearr)).from_buffer(bytearr)
     __assertnvperror(_c_fn(handle, device, address, data, len(bytearr)))
@@ -552,7 +572,10 @@ def writeI2Cctrl(
     [DeviceHandle, c_int, c_uint8, c_uint8, POINTER(c_uint8), c_size_t],
 )
 def readI2Cctrl(
-    handle: DeviceHandle, device: int, address: int, length: int
+    handle: DeviceHandle,
+    device: int,
+    address: int,
+    length: int,
 ) -> bytearray:
     b = bytearray(length)
     ptr = (c_char * length).from_buffer(b)
@@ -566,7 +589,9 @@ def setGain(handle: DeviceHandle, probe: int, channel: int, gain: int):
 
 
 @_wrap_function(
-    "writeChannelConfiguration", NVP_ErrorCode, [DeviceHandle, c_uint8, c_bool]
+    "writeChannelConfiguration",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, c_bool],
 )
 def writeChannelConfiguration(handle: DeviceHandle, probe: int, readCheck: bool):
     __assertnvperror(_c_fn(handle, probe, readCheck))
@@ -580,10 +605,15 @@ def setOSimage(handle: DeviceHandle, probe: int, buffer: bytes):
 
 
 @_wrap_function(
-    "writeOSConfiguration", NVP_ErrorCode, [DeviceHandle, c_uint8, c_bool, c_bool]
+    "writeOSConfiguration",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, c_bool, c_bool],
 )
 def writeOsConfiguration(
-    handle: DeviceHandle, probe: int, readCheck: bool, skip_sync_check: bool
+    handle: DeviceHandle,
+    probe: int,
+    readCheck: bool,
+    skip_sync_check: bool,
 ):
     __assertnvperror(_c_fn(handle, probe, readCheck, skip_sync_check))
 
@@ -604,7 +634,9 @@ def setSyncClockFrequency(handle: DeviceHandle, frequency: float) -> None:
 
 
 @_wrap_function(
-    "getSyncClockFrequency", NVP_ErrorCode, [DeviceHandle, POINTER(c_double)]
+    "getSyncClockFrequency",
+    NVP_ErrorCode,
+    [DeviceHandle, POINTER(c_double)],
 )
 def getSyncClockFrequency(handle: DeviceHandle) -> float:
     freq = c_double(0)
@@ -662,7 +694,9 @@ def getTriggerMode(handle: DeviceHandle) -> TriggerMode:
     ],
 )
 def readElectrodeData(
-    handle: DeviceHandle, probe: int, packet_count: int
+    handle: DeviceHandle,
+    probe: int,
+    packet_count: int,
 ) -> list[Packet]:
     # Read electrode data
     # handle: device handle got by createHandle()
@@ -680,17 +714,27 @@ def readElectrodeData(
 
     __assertnvperror(
         _c_fn(
-            handle, probe, info_arr, data_arr, channel_count, packet_count, packets_read
-        )
+            handle,
+            probe,
+            info_arr,
+            data_arr,
+            channel_count,
+            packet_count,
+            packets_read,
+        ),
     )
 
     packets = [None] * packets_read.value
-    for i in range(0, packets_read.value):
+    for i in range(packets_read.value):
         info = info_arr[i]
         offset = i * channel_count
         data = data_arr[offset : offset + channel_count]
         packets[i] = Packet(
-            info.Timestamp, info.Status, info.payloadlength, info.session_id, data
+            info.Timestamp,
+            info.Status,
+            info.payloadlength,
+            info.session_id,
+            data,
         )
     return packets
 
@@ -728,7 +772,9 @@ def readMezzanineHardwareID(handle: DeviceHandle, probe: int) -> HardwareID:
 
 
 @_wrap_function(
-    "readProbeHardwareID", NVP_ErrorCode, [DeviceHandle, c_uint8, POINTER(HardwareID)]
+    "readProbeHardwareID",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, POINTER(HardwareID)],
 )
 def readProbeHardwareID(handle: DeviceHandle, probe: int) -> HardwareID:
     hwid = HardwareID()
@@ -750,7 +796,9 @@ def enableFileStream(handle: DeviceHandle, enable: bool) -> None:
 
 
 @_wrap_function(
-    "streamOpenFile", NVP_ErrorCode, [c_char_p, POINTER(StreamHandle), c_uint8]
+    "streamOpenFile",
+    NVP_ErrorCode,
+    [c_char_p, POINTER(StreamHandle), c_uint8],
 )
 def streamOpenFile(filename: str, probe: int) -> StreamHandle:
     ptr = c_void_p()
@@ -783,19 +831,28 @@ def streamReadData(handle: StreamHandle, packet_count: int) -> list[Packet]:
     data_arr = (c_int16 * (packet_count * channel_count))()
 
     error_code = _c_fn(
-        handle, info_arr, data_arr, channel_count, packet_count, packets_read
+        handle,
+        info_arr,
+        data_arr,
+        channel_count,
+        packet_count,
+        packets_read,
     )
     # STREAM_EOF = 26
     if error_code != 26 and error_code != 0:
         raise NeuraviperAPIError(error_code)
 
     packets = [None] * packets_read.value
-    for i in range(0, packets_read.value):
+    for i in range(packets_read.value):
         info = info_arr[i]
         offset = i * channel_count
         data = data_arr[offset : offset + channel_count]
         packets[i] = Packet(
-            info.Timestamp, info.Status, info.payloadlength, info.session_id, data
+            info.Timestamp,
+            info.Status,
+            info.payloadlength,
+            info.session_id,
+            data,
         )
     return packets
 
@@ -821,9 +878,11 @@ def bistStartPRBS(handle: DeviceHandle):
 
 
 @_wrap_function(
-    "bistStopPRBS", NVP_ErrorCode, [DeviceHandle, POINTER(c_int), POINTER(c_int)]
+    "bistStopPRBS",
+    NVP_ErrorCode,
+    [DeviceHandle, POINTER(c_int), POINTER(c_int)],
 )
-def bistStopPRBS(handle: DeviceHandle) -> Tuple[int, int]:
+def bistStopPRBS(handle: DeviceHandle) -> tuple[int, int]:
     prbs_err_data = c_int(0)
     prbs_err_ctrl = c_int(0)
     __assertnvperror(_c_fn(handle, prbs_err_data, prbs_err_ctrl))
@@ -831,9 +890,11 @@ def bistStopPRBS(handle: DeviceHandle) -> Tuple[int, int]:
 
 
 @_wrap_function(
-    "bistReadPRBS", NVP_ErrorCode, [DeviceHandle, POINTER(c_int), POINTER(c_int)]
+    "bistReadPRBS",
+    NVP_ErrorCode,
+    [DeviceHandle, POINTER(c_int), POINTER(c_int)],
 )
-def bistReadPRBS(handle: DeviceHandle) -> Tuple[int, int]:
+def bistReadPRBS(handle: DeviceHandle) -> tuple[int, int]:
     prbs_err_data = c_int(0)
     prbs_err_ctrl = c_int(0)
     __assertnvperror(_c_fn(handle, prbs_err_data, prbs_err_ctrl))
@@ -859,24 +920,35 @@ def bistSR(handle: DeviceHandle, probe: int):
 #######################################################################################
 #######################################################################################
 @_wrap_function(
-    "selectElectrode", NVP_ErrorCode, [DeviceHandle, c_uint8, c_int, ElectrodeInput]
+    "selectElectrode",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, c_int, ElectrodeInput],
 )
 def selectElectrode(
-    handle: DeviceHandle, probe: int, channel: int, electrode: ElectrodeInput
+    handle: DeviceHandle,
+    probe: int,
+    channel: int,
+    electrode: ElectrodeInput,
 ) -> None:
     __assertnvperror(_c_fn(handle, probe, channel, electrode))
 
 
 @_wrap_function("setReference", NVP_ErrorCode, [DeviceHandle, c_uint8, c_int, c_int])
 def setReference(
-    handle: DeviceHandle, probe: int, channel: int, reference: int
+    handle: DeviceHandle,
+    probe: int,
+    channel: int,
+    reference: int,
 ) -> None:
     __assertnvperror(_c_fn(handle, probe, channel, reference))
 
 
 @_wrap_function("setOSEnable", NVP_ErrorCode, [DeviceHandle, c_uint8, c_int, c_bool])
 def setOSEnable(
-    handle: DeviceHandle, probe: int, output_stage: int, enable: bool
+    handle: DeviceHandle,
+    probe: int,
+    output_stage: int,
+    enable: bool,
 ) -> None:
     __assertnvperror(_c_fn(handle, probe, output_stage, enable))
 
@@ -933,7 +1005,7 @@ def writeSUConfiguration(
             TON2,
             TDIS,
             TDISEND,
-        )
+        ),
     )
 
 
@@ -943,10 +1015,15 @@ def SUtrig1(handle: DeviceHandle, probe: int, trigger: int) -> None:
 
 
 @_wrap_function(
-    "setOSInputSU", NVP_ErrorCode, [DeviceHandle, c_uint8, c_uint8, c_uint8]
+    "setOSInputSU",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, c_uint8, c_uint8],
 )
 def setOSInputSU(
-    handle: DeviceHandle, probe: int, output_stage: int, stim_unit: int
+    handle: DeviceHandle,
+    probe: int,
+    output_stage: int,
+    stim_unit: int,
 ) -> None:
     __assertnvperror(_c_fn(handle, probe, output_stage, stim_unit))
 
@@ -957,16 +1034,23 @@ def setAZ(handle: DeviceHandle, probe: int, channel: int, autoreset: bool) -> No
 
 
 @_wrap_function(
-    "setOSDischargeperm", NVP_ErrorCode, [DeviceHandle, c_uint8, c_uint8, c_bool]
+    "setOSDischargeperm",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, c_uint8, c_bool],
 )
 def setOSDischargeperm(
-    handle: DeviceHandle, probe: int, OS: int, discharge_perm: bool
+    handle: DeviceHandle,
+    probe: int,
+    OS: int,
+    discharge_perm: bool,
 ) -> None:
     __assertnvperror(_c_fn(handle, probe, OS, discharge_perm))
 
 
 @_wrap_function(
-    "setOSStimblank", NVP_ErrorCode, [DeviceHandle, c_uint8, c_uint8, c_bool]
+    "setOSStimblank",
+    NVP_ErrorCode,
+    [DeviceHandle, c_uint8, c_uint8, c_bool],
 )
 def setOSStimblank(handle: DeviceHandle, probe: int, OS: int, stimblank: bool) -> None:
     __assertnvperror(_c_fn(handle, probe, OS, stimblank))
@@ -979,7 +1063,7 @@ if __name__ == "__main__":
 
     import sys
 
-    print("API Version: %s.%s.%s" % getAPIVersion())
+    print("API Version: {}.{}.{}".format(*getAPIVersion()))
 
     # scanBS() happens automatically, but we can use it to force re-discovery of devices
     scanBS()

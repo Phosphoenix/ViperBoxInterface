@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import json
 import logging
 import logging.handlers
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 from lxml import etree
-
 from VB_classes import (
     BoxSettings,
     ChanSettings,
@@ -22,7 +23,8 @@ from VB_classes import (
 logger = logging.getLogger("XML_handler")
 logger.setLevel(logging.DEBUG)
 socketHandler = logging.handlers.SocketHandler(
-    "localhost", logging.handlers.DEFAULT_TCP_LOGGING_PORT
+    "localhost",
+    logging.handlers.DEFAULT_TCP_LOGGING_PORT,
 )
 logger.addHandler(socketHandler)
 
@@ -31,6 +33,7 @@ def check_gain_input_format(gain: int) -> bool:
     """Check if gain or input is in the correct format
 
     Arguments:
+    ---------
     - gain or input: integer between 0 and 3
 
     test cases:
@@ -39,7 +42,7 @@ def check_gain_input_format(gain: int) -> bool:
     gain = int(gain)
     if gain not in [0, 1, 2, 3]:
         raise ValueError(
-            f"Gain/input is {gain}. Value should be an integer between 0 and 3"
+            f"Gain/input is {gain}. Value should be an integer between 0 and 3",
         )
     return True
 
@@ -75,38 +78,34 @@ screen_name = {
 
 
 def verify_step_min_max(name: str, step: int, min_val: int, max_val: int, value: int):
-    """
-    The variable name must be the first thing that is mentioned in the error message.
+    """The variable name must be the first thing that is mentioned in the error message.
     It is used in the front end to correct a value to it's default.
     """
     if not min_val <= value <= max_val:
         raise ValueError(
             f"{screen_name[name]} must be between {min_val} and {max_val} and a \
-multiple of {step}. It is now {value}."
+multiple of {step}. It is now {value}.",
         )
     if (value - min_val) % step != 0:
         raise ValueError(
             f"{screen_name[name]} must be between {min_val} and {max_val} and a \
-multiple of {step}. It is now {value}."
+multiple of {step}. It is now {value}.",
         )
     return True
 
 
 def get_required_boxes_probes_from_xml(data_xml, connected: ConnectedBoxes):
-    """
-    Read XML and summarize all connected boxes and respective probes into ConnectedBoxes
+    """Read XML and summarize all connected boxes and respective probes into ConnectedBoxes
 
     Arguments:
+    ---------
     - data_xml: xml data of type lxml.etree._ElementTree
     - connected: connected boxes and probes, used if XML contains '-' for box or probe
 
     """
     logger.debug(f"connected: {connected}")
     tmp_xml = etree.fromstring("<a />")
-    if not (
-        isinstance(data_xml, type(tmp_xml))
-        or isinstance(data_xml, type(etree.ElementTree(tmp_xml)))
-    ):
+    if not (isinstance(data_xml, type(etree.ElementTree(tmp_xml)) | type(tmp_xml))):
         raise ValueError(f"data_xml is of type {type(data_xml)}")
 
     required = ConnectedBoxes()
@@ -124,7 +123,9 @@ def get_required_boxes_probes_from_xml(data_xml, connected: ConnectedBoxes):
             # if XML_element contains recording settings, add these settings
             for XML_settings in XML_element:
                 boxes = parse_numbers(
-                    XML_settings.attrib["box"], [0, 1, 2], list(connected.boxes.keys())
+                    XML_settings.attrib["box"],
+                    [0, 1, 2],
+                    list(connected.boxes.keys()),
                 )
                 for box in boxes:
                     required.boxes[box] = ConnectedProbes()
@@ -139,7 +140,9 @@ def get_required_boxes_probes_from_xml(data_xml, connected: ConnectedBoxes):
 
 
 def update_settings_with_XML(
-    data_xml: Any, local_settings: GeneralSettings, check_topic: str = "all"
+    data_xml: Any,
+    local_settings: GeneralSettings,
+    check_topic: str = "all",
 ):
     """Write xml data_xml to local settings, only if the respective boxes and probes
     are connected. Else they are skipped.
@@ -148,6 +151,7 @@ def update_settings_with_XML(
     Goes through all boxes and probes in data_xml xml
 
     Arguments:
+    ---------
     - data_xml: xml of type lxml.etree._ElementTree
     - local_settings: local settings of type GeneralSettings
     - check_topic: string, either "all", "recording" or "stimulation"
@@ -155,7 +159,6 @@ def update_settings_with_XML(
     Test cases:
     - data_xml has attributes that do not exist in classes
     """
-
     # TODO deal with overwriting all settings.
     if check_topic == "all":
         tags = [
@@ -174,16 +177,19 @@ def update_settings_with_XML(
             # if XML_element contains recording settings, add these settings
             for XML_settings in XML_element:
                 boxes = parse_numbers(
-                    XML_settings.attrib["box"], list(local_settings.connected.keys())
+                    XML_settings.attrib["box"],
+                    list(local_settings.connected.keys()),
                 )
                 for box in boxes:
                     probes = parse_numbers(
-                        XML_settings.attrib["probe"], local_settings.connected[box]
+                        XML_settings.attrib["probe"],
+                        local_settings.connected[box],
                     )
                     for probe in probes:
                         if XML_settings.tag == "Channel":
                             all_channels = parse_numbers(
-                                XML_settings.attrib["channel"], list(range(64))
+                                XML_settings.attrib["channel"],
+                                list(range(64)),
                             )
                             for channel in all_channels:
                                 # check_references_format(
@@ -196,7 +202,8 @@ def update_settings_with_XML(
                                 ] = ChanSettings.from_dict(XML_settings.attrib)
                         if XML_settings.tag == "Configuration":
                             all_waveforms = parse_numbers(
-                                XML_settings.attrib["stimunit"], list(range(8))
+                                XML_settings.attrib["stimunit"],
+                                list(range(8)),
                             )
                             for waveform in all_waveforms:
                                 for parameter_set in verify_params:
@@ -209,7 +216,8 @@ def update_settings_with_XML(
                                 ] = SUSettings.from_dict(XML_settings.attrib)
                         if XML_settings.tag == "Mapping":
                             all_mappings = parse_numbers(
-                                XML_settings.attrib["stimunit"], list(range(8))
+                                XML_settings.attrib["stimunit"],
+                                list(range(8)),
                             )
                             for mapping in all_mappings:
                                 local_settings.boxes[box].probes[probe].stim_unit_os[
@@ -251,10 +259,10 @@ def update_settings_with_XML(
 
 
 def check_required_boxes_probes_connected(
-    required: ConnectedBoxes, connected: ConnectedBoxes
+    required: ConnectedBoxes,
+    connected: ConnectedBoxes,
 ) -> list:
-    """
-    Compares required boxes with connected boxes and returns list of not connected \
+    """Compares required boxes with connected boxes and returns list of not connected \
 boxes and probes.
     """
     logger.debug(f"required: {required}, connected: {connected}")
@@ -273,12 +281,12 @@ def check_xml_boxprobes_exist_and_verify_data_with_settings(
     settings: GeneralSettings,
     connected: ConnectedBoxes,
     check_topic: str = "all",
-) -> Tuple[bool, str]:
-    """
-    - boxes and probes are available
+) -> tuple[bool, str]:
+    """- boxes and probes are available
     - possible settings are valid with existing local_settings.
 
     Arguments:
+    ---------
     - XML_data: xml of type string
     - settings: settings of type GeneralSettings
 
@@ -295,9 +303,7 @@ def check_xml_boxprobes_exist_and_verify_data_with_settings(
             return False, f"XML is provided as string, but not valid xml. Error: {e}"
     else:
         tmp_xml = etree.fromstring("<a />")
-        if isinstance(XML_data, type(tmp_xml)) or isinstance(
-            XML_data, type(etree.ElementTree(tmp_xml))
-        ):
+        if isinstance(XML_data, type(etree.ElementTree(tmp_xml)) | type(tmp_xml)):
             logger.debug(f"XML is supplied as {type(XML_data)}")
         else:
             raise ValueError(f"XML is supplied as {type(XML_data)}")
@@ -307,7 +313,7 @@ def check_xml_boxprobes_exist_and_verify_data_with_settings(
     not_connected = check_required_boxes_probes_connected(required, connected)
     if not_connected != []:
         substring = ", ".join(
-            [f"box {box} probe {probe}" for box, probe in not_connected]
+            [f"box {box} probe {probe}" for box, probe in not_connected],
         )
         return False, f"{substring} are not connected to ViperBox"
 
@@ -360,6 +366,7 @@ def create_empty_xml(path: Path):
         settings line.
 
     Arguments:
+    ---------
     - path: path to the xml file
 
     Test cases:
@@ -369,7 +376,10 @@ def create_empty_xml(path: Path):
     program = etree.Element("Recording")
     _ = etree.SubElement(program, "Settings")
     xml_bytes = etree.tostring(
-        program, pretty_print=True, xml_declaration=True, encoding="UTF-8"
+        program,
+        pretty_print=True,
+        xml_declaration=True,
+        encoding="UTF-8",
     )
     with open(path, "wb") as xml_file:
         xml_file.write(xml_bytes)
@@ -384,11 +394,11 @@ def add_to_stimrec(
     start_time: float,
     delta_time: float,
 ):
-    """
-    Add setting or instruction to the stimrec xml file.
+    """Add setting or instruction to the stimrec xml file.
     Converst from 0-indexing to 1-indexing.
 
     Arguments:
+    ---------
     - path: path to the xml file
     - main_type: type of the setting, should be 'Settings' or 'Instructions'
     - sub_type: sub_type of the setting, should be 'Channel', 'Configuration' or
@@ -418,7 +428,7 @@ def add_to_stimrec(
             settings_dict[key] = settings_dict[key] + 1
     if "electrodes" in settings_dict.keys():
         settings_dict["electrodes"] = ", ".join(
-            map(str, np.asarray(settings_dict["electrodes"]) + 1)
+            map(str, np.asarray(settings_dict["electrodes"]) + 1),
         )
 
     settings_dict = {str(key): str(value) for key, value in settings_dict.items()}
@@ -435,13 +445,13 @@ def add_to_stimrec(
     }
     if main_type not in ["Settings", "Instructions"]:
         raise ValueError(
-            f"""{main_type} is not a valid type, should be 'Settings' or 
-                        'Instructions'"""
+            f"""{main_type} is not a valid type, should be 'Settings' or
+                        'Instructions'""",
         )
     if sub_type not in sub_type_map.keys():
         raise ValueError(
-            f"""{sub_type} is not a valid sub_type, should be 'Channel', 
-                        'Configuration' or 'Mapping'"""
+            f"""{sub_type} is not a valid sub_type, should be 'Channel',
+                        'Configuration' or 'Mapping'""",
         )
 
     program = etree.parse(path)
@@ -492,7 +502,10 @@ def add_to_stimrec(
 
     etree.indent(program, space="    ", level=0)
     xml_bytes = etree.tostring(
-        program, pretty_print=True, xml_declaration=True, encoding="UTF-8"
+        program,
+        pretty_print=True,
+        xml_declaration=True,
+        encoding="UTF-8",
     )
     with open(path, "wb") as xml_file:
         xml_file.write(xml_bytes)
@@ -511,20 +524,20 @@ if __name__ == "__main__":
                     target_box="1" target_probe="1" target_SU="-" />
             </TTLSettings>
             <RecordingSettings>
-                <Channel box="-" probe="-" channel="1-3" references="100101000" 
+                <Channel box="-" probe="-" channel="1-3" references="100101000"
                 gain="1" input="0" />
-                <Channel box="1" probe="3" channel="63" references="100000000" 
+                <Channel box="1" probe="3" channel="63" references="100000000"
                 gain="1" input="0" />
             </RecordingSettings>
             <StimulationWaveformSettings>
-                <Configuration box="1" probe="1,2,3,4" stimunit="5-8,2,1" 
+                <Configuration box="1" probe="1,2,3,4" stimunit="5-8,2,1"
                 polarity="0" pulses="20"
-                    prephase="0" amplitude1="5" width1="170" interphase="60" 
+                    prephase="0" amplitude1="5" width1="170" interphase="60"
                     amplitude2="5" width2="170"
                     discharge="200" duration="600" aftertrain="1000" />
-                <Configuration box="2" probe="1" stimunit="1" polarity="0" 
+                <Configuration box="2" probe="1" stimunit="1" polarity="0"
                 pulses="20" prephase="0"
-                    amplitude1="5" width1="170" interphase="60" amplitude2="5" 
+                    amplitude1="5" width1="170" interphase="60" amplitude2="5"
                     width2="170"
                     discharge="200" duration="600" aftertrain="1000" />
             </StimulationWaveformSettings>
@@ -560,8 +573,8 @@ if __name__ == "__main__":
         except KeyError:
             connected_boxes_probes[box] = []
     print(
-        f"""boxes: {list(connected_boxes_probes.keys())} and \nbox probe 
-        dict: {connected_boxes_probes}"""
+        f"""boxes: {list(connected_boxes_probes.keys())} and \nbox probe
+        dict: {connected_boxes_probes}""",
     )
 
     local_settings = GeneralSettings()

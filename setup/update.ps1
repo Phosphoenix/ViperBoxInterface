@@ -23,9 +23,9 @@ Invoke-WebRequest -Uri $fileUrl -OutFile $fileDestination
 
 
 $userFolder = [Environment]::GetFolderPath("UserProfile")
-$anacondaLocation = "$userFolder\anaconda3" 
+$anacondaLocation = "$userFolder\anaconda3"
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-# how can you start-process but leave the 
+# how can you start-process but leave the
 Start-Process -FilePath "$anacondaLocation\Scripts\conda.exe" -ArgumentList "env update --name viperbox --file .\setup\viperbox.yaml --prune" -Wait -NoNewWindow
 
 

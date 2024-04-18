@@ -436,7 +436,7 @@ NVP_EXPORT NVP_ErrorCode selectElectrode(DeviceHandle handle, uint8_t probe, int
 
 /**
  * Select reference electrode(s) for recording channel.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param channel Recording channel number (valid range 0 to 63)
@@ -446,7 +446,7 @@ NVP_EXPORT NVP_ErrorCode setReference(DeviceHandle handle, uint8_t probe, int ch
 
 /**
  * Set channel gain
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param channel Recording channel number (valid range 0 to 63)
@@ -466,7 +466,7 @@ NVP_EXPORT NVP_ErrorCode setZmeas(DeviceHandle handle, uint8_t probe, int channe
 
 /**
  * Set a channel in stand-by mode.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param channel Recording channel number
@@ -476,7 +476,7 @@ NVP_EXPORT NVP_ErrorCode setStdb(DeviceHandle handle, uint8_t probe, int channel
 
 /**
  * Enable the Auto Reset function for a channel.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param channel Recording channel number (valid range 0 to 63)
@@ -486,7 +486,7 @@ NVP_EXPORT NVP_ErrorCode setAZ(DeviceHandle handle, uint8_t probe, int channel, 
 
 /**
  * Write shank and base configuration to probe ASIC.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param readCheck If enabled, read the configuration shift registers back to check
@@ -495,7 +495,7 @@ NVP_EXPORT NVP_ErrorCode writeChannelConfiguration(DeviceHandle handle, uint8_t 
 
 /**
  * Select stimulation unit for output stage
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param output_stage Output stage number (valid range: 0 to 127)
@@ -505,7 +505,7 @@ NVP_EXPORT NVP_ErrorCode setOSInputSU(DeviceHandle handle, uint8_t probe, int ou
 
 /**
  * Enable output stage.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param output_stage Output stage number (valid range: 0 to 127)
@@ -515,7 +515,7 @@ NVP_EXPORT NVP_ErrorCode setOSEnable(DeviceHandle handle, uint8_t probe, int out
 
 /**
  * Connect output stage to the calibration signal line.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param output_stage Output stage number (valid range: 0 to 127)
@@ -527,7 +527,7 @@ NVP_EXPORT NVP_ErrorCode setOSCalibrate(DeviceHandle handle, uint8_t probe, int 
  * Each OS has a switch to discharge the electrode automatically after a stimulation event.
  * However, this switch may be forced permanently closed for certain applications by setting this flag.
  * The user can set each OS individually.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param output_stage Output stage number (valid range: 0 to 127)
@@ -540,7 +540,7 @@ NVP_EXPORT NVP_ErrorCode setOSDischargeperm(DeviceHandle handle, uint8_t probe, 
  * to avoid large input voltages. This switch is controlled by the output stage whos signal is connected to the channel
  * input. The stimulation blanking can be set using this flag and should be enabled by default. The user can set each
  * OS individually.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param output_stage Output stage number (valid range: 0 to 127)
@@ -550,7 +550,7 @@ NVP_EXPORT NVP_ErrorCode setOSStimblank(DeviceHandle handle, uint8_t probe, int 
 
 /**
  * Sets the value of the output stage pixels.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param osdata Array of 128*4 bits (= 64 bytes) which contain the core configuration of the 128 output stages.
@@ -563,7 +563,7 @@ NVP_EXPORT NVP_ErrorCode setOSimage(DeviceHandle handle, uint8_t probe, uint8_t*
  * A bug in the ASIC can cause a write to SR chains to fail, or even overwrite the probe's sync word.
  * To prevent this from happening, a safeguard has been built-in, at the cost of increased latency.
  * This workaround can be bypassed by setting skip_sync_check to true.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param read_check If enabled, read the configuration shift registers back to check
@@ -576,7 +576,7 @@ NVP_EXPORT NVP_ErrorCode writeOSConfiguration(DeviceHandle handle,
 
 /**
  * Configure stimulation unit registers.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param stimunit Stimulation unit number (valid range 0 to 8)
@@ -611,7 +611,7 @@ NVP_EXPORT NVP_ErrorCode writeSUConfiguration(
 
 /**
  * Set bit mask of SU_TRIG1 register.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param trigger To be written to SU_TRIG1 register, contains the bit mask to which SU will trigger
@@ -620,7 +620,7 @@ NVP_EXPORT NVP_ErrorCode SUtrig1(DeviceHandle handle, uint8_t probe, uint8_t tri
 
 /**
  * Configure the electrode impedance frequency and amplitude.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param frequency Set the frequency of the impedance measurement (valid range 0-7)
@@ -630,7 +630,7 @@ NVP_EXPORT NVP_ErrorCode setElimp(DeviceHandle handle, uint8_t probe, uint8_t fr
 
 /**
  * Enable the reset of the impedance generator.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param reset Enable the reset of the impedance generator, bit ELIMP_NRESET in EL_IMP_MOD register
@@ -650,14 +650,14 @@ NVP_EXPORT NVP_ErrorCode resetElimp(DeviceHandle handle, uint8_t probe, bool res
  * data, calling the API ‘arm’ function again stops the buffering of neural data
  * packets, clears the basestation DRAM FIFO, stops the time stamp generator and
  * resets the timestamp to 0.
- * 
+ *
  * @param handle Device handle of the basestation
  */
 NVP_EXPORT NVP_ErrorCode arm(DeviceHandle handle);
 
 /**
  * Generate a software start trigger.
- * 
+ *
  * @param handle Device handle of the basestation
  */
 NVP_EXPORT NVP_ErrorCode setSWTrigger(DeviceHandle handle);
@@ -748,7 +748,7 @@ NVP_EXPORT NVP_ErrorCode getTriggerMode(DeviceHandle handle, TriggerMode* mode);
 
 /**
  * Fetch data packets from the BS FIFO buffer.
- * 
+ *
  * @param handle Device handle of the basestation
  * @param probe Index of the probe/mezzanine board (valid range 0 to 3)
  * @param info Output data containing additional packet data: timestamp, stream status, payload length, and session ID (size of buffer should be at least channel_count)

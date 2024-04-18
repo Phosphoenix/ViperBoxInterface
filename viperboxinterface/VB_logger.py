@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import logging.handlers
 import pickle
@@ -17,8 +19,7 @@ class LogRecordStreamHandler(socketserver.StreamRequestHandler):
     """
 
     def handle(self):
-        """
-        Handle multiple requests - each expected to be a 4-byte length,
+        """Handle multiple requests - each expected to be a 4-byte length,
         followed by the LogRecord in pickle format. Logs the record
         according to whatever policy is configured locally.
         """
@@ -53,9 +54,7 @@ class LogRecordStreamHandler(socketserver.StreamRequestHandler):
 
 
 class LogRecordSocketReceiver(socketserver.ThreadingTCPServer):
-    """
-    Simple TCP socket-based logging receiver suitable for testing.
-    """
+    """Simple TCP socket-based logging receiver suitable for testing."""
 
     allow_reuse_address = True
 

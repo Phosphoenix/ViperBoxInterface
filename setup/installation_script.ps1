@@ -48,7 +48,7 @@ if (-not $anacondaLocation) {
     }
 }
 
-$anacondaLocation = "$userFolder\anaconda3" 
+$anacondaLocation = "$userFolder\anaconda3"
 
 # Define URLs and paths for software installations
 $software = @{
@@ -105,4 +105,3 @@ $Shortcut.Save()
 Write-Host "All tasks completed!" -ForegroundColor Green
 
 Read-Host -Prompt "Press Enter to exit"
-

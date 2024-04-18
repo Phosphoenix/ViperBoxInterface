@@ -8,14 +8,14 @@ import pandas as pd
 logger = logging.getLogger("defaults")
 logger.setLevel(logging.DEBUG)
 socketHandler = logging.handlers.SocketHandler(
-    "localhost", logging.handlers.DEFAULT_TCP_LOGGING_PORT
+    "localhost",
+    logging.handlers.DEFAULT_TCP_LOGGING_PORT,
 )
 logger.addHandler(socketHandler)
 
 
 class Mappings:
-    """
-    Read mappings from Excel file and provide them as properties.
+    """Read mappings from Excel file and provide them as properties.
     Excel file is 1-indexed, but the properties are 0-indexed, except probe electrode
     and EL_PAD# numbering. Probe electrode is 1-indexed. EL_PAD# is used to provide
     values for the XML which is also 1-indexed.
@@ -64,7 +64,7 @@ class Mappings:
         except Exception as e:
             self.rec_mapping = hardcoded_mapping.copy()
             logger.warning(
-                f"Couldn't read mappings from excel file, using defaults. Error: {e}"
+                f"Couldn't read mappings from excel file, using defaults. Error: {e}",
             )
 
     @property
@@ -95,7 +95,8 @@ class Snappings:
     def __init__(self):
         try:
             self.mapping = pd.read_excel(
-                "defaults/electrode_mapping_short_cables.xlsx", sheet_name=1
+                "defaults/electrode_mapping_short_cables.xlsx",
+                sheet_name=1,
             )
             self.mapping = self.mapping[
                 [
