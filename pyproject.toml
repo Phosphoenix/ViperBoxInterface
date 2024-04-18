@@ -25,6 +25,7 @@ dependencies = [
     "scipy",
     "pandas",
     "versioningit",
+    "psutil",
 ]
 channels = ["conda-forge"]
 
