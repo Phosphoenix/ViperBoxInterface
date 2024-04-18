@@ -1,9 +1,6 @@
 # :brain: ViperBoxInterface
 
-<figure align="center">
-    <img src="imgs/viperboxinterface.png" style="width: 50%; height: auto;">
-    <!-- <figcaption>Overview of all the settings for one ViperBox</figcaption> -->
-</figure>
+![Overview of all the settings for one ViperBox](./imgs/viperboxinterface.png)
 
 > ViperBoxInterface is a piece of software that streamlines interaction with the ViperBox developed for the NeuraViPeR project.
 > It streams data through [Open Ephys](#open-ephys).
@@ -53,16 +50,9 @@ If that doesn't work (see [FAQ](#faq)), you can start the software by following 
 3. Navigate to the folder where the software is downloaded by typing `cd <path to the folder>`
 4. Type `uvicorn main:app --reload` and press enter
 
-<figure align="center">
-    <img src="imgs/viperbox_gui.png" style="width: 80%; height: auto;">
-    <figcaption>ViperBox GUI</figcaption>
-</figure>
+![ViperBox GUI](./imgs/viperbox_gui.png)
 
-<figure align="center">
-    <img src="imgs/oe_gui.png" style="width: 80%; height: auto;">
-    <figcaption>Open Ephys GUI</figcaption>
-</figure>
-
+![Open Ephys GUI](./imgs/oe_gui.png)
 
 #### ViperBox Control usage
 
@@ -86,12 +76,8 @@ The Open Ephys GUI is an open-source, plugin-based application for acquiring ext
 
 ### Recording
 
-Recording can be done in the Open Ephys interface.
-
-<figure align="center">
-    <img src="imgs/recording_instructions.png" style="width: 80%; height: auto;">
-    <figcaption>Recording in Open Ephys</figcaption>
-</figure>
+Recording can be done in the top of he Open Ephys interface.
+![Recording settings in Open Ephys](./imgs/recording_instructions.png)
 
 Data can be saved in binary, Open Ephys Format and NWB format. The Open Ephys Format useful for loading the data into NeuroExplorer from which it can then be exported into .NEX or .NEX5 format. The formats are not available out of the box, to install them, please [follow the instructions](https://open-ephys.github.io/gui-docs/User-Manual/Recording-data/index.html).
 
@@ -108,10 +94,7 @@ Data can be saved in binary, Open Ephys Format and NWB format. The Open Ephys Fo
 | 24   | 11.2  | 2048   |
 | 12   | 19.8  | 2048   |
 
-<figure align="center">
-    <img src="imgs/ephys_socket_scale_offset.png" style="width: 30%; height: auto;">
-    <figcaption>Screenshot of Ephys Socket in Open Ephys</figcaption>
-</figure>
+![Screenshot of Ephys Socket in Open Ephys](./imgs/ephys_socket_scale_offset.png)
 
 To change these settings, first you need to stop the acquistion of data in Open Ephys by clicking the yellow play button in the top right of the screen. Then you can click 'DISCONNECT' in the Ephys Socket module. After that, you can change the values in the 'Scale' field. After changing the values, go to the ViperBox interface and click 'Connect Open Ephys', then click 'CONNECT' in the Ephys Socket module.
 
@@ -121,10 +104,7 @@ Reference settings are wired in the chip in the following way. For each of the 6
 
 This signal is compared to any or all of the references (which you can select in the GUI). In principle, the body reference should always be used.
 
-<figure align="center">
-    <img src="imgs/references.png" style="width: 50%; height: auto;">
-    <figcaption>Connection of recording channel (left) with recording electrodes (top right) and references (bottom right)</figcaption>
-</figure>
+![Connection of recording channel (left) with recording electrodes (top right) and references (bottom right)](./imgs/references.png)
 
 ### Choosing probe electrodes
 
@@ -140,10 +120,7 @@ Only edit the 'Channel taken' column. Whenever the software starts or new settin
 
 Note that in the resulting recording in Open Ephys, the 'Duplicate' channels will be set to an empty signal but their order is the same as on the IMTEK probe.
 
-<figure align="center">
-    <img src="imgs/electrode_mapping_short_cables.png" style="width: 100%; height: auto;">
-    <figcaption>Changing which Probe electrodes will be read out.</figcaption>
-</figure>
+![Manage electrode - channel mapping](./imgs/electrode_mapping_short_cables.png)
 
 ## :question: (F)AQ
 
@@ -177,17 +154,13 @@ The API can be used to communicate with the ViperBox. It can be used to connect 
 The API can be manually controlled from the web interface by clicking the dropdown next to the function, then clicking "Try it out" and then clicking the blue "Execute" button.
 The typical workflow to do a recording and stimulation is to run the following commands:
 - `/connect`: to connect to the ViperBox
-<figure align="center">
-    <img src="imgs/connect.gif" style="width: 80%; height: auto;">
-    <!-- <figcaption>Overview of all the settings for one ViperBox</figcaption> -->
-</figure>
+
+![Overview of all the settings for one ViperBox](./imgs/connect.gif)
 
 - `/upload_recording_settings`: to upload the recording settings. Default [XML settings](#xml-scripts) are selected by default.
-    - To edit the settings, open an editor and copy the default settings from the defaults folder into it. Adjust them and copy and paste everything into the ViperBox API. See below.
-<figure align="center">
-    <img src="imgs/recording_settings.gif" style="width: 80%; height: auto;">
-    <!-- <figcaption>Overview of all the settings for one ViperBox</figcaption> -->
-</figure>
+  - To edit the settings, open an editor and copy the default settings from the defaults folder into it. Adjust them and copy and paste everything into the ViperBox API. See below.
+
+![Overview of all the settings for one ViperBox](./imgs/recording_settings.gif)
 
 - `/upload_stimulation_settings`: to upload the stimulation settings. Default settings are selected by default. XML settings can be added here, too.
 - `/start_recording`: to start the recording. Don't forget to give up a name.
@@ -206,10 +179,7 @@ During a recording, new stimulation settings can be uploaded and a new stimulati
 
 ## :hammer_and_wrench: Overview of ViperBox settings
 
-<figure align="center">
-    <img src="imgs/settings_mindmap.png" style="width: 80%; height: auto;">
-    <figcaption>Overview of all the settings for one ViperBox</figcaption>
-</figure>
+![Overview of all the settings for one ViperBox](./imgs/settings_mindmap.png)
 
 - box: there are up to 3 boxes
 - probes: each box can have up to 4 probes connected to them
@@ -285,10 +255,7 @@ The default stimulation settings are the following:
 In StimulationWaveformSettings, `stimunit` means stimulation unit which is a waveform generator, there are 8 stimulation units per probe.
 In StimulationMappingSettings, these stimulation units can be connected to any or all of the electrodes.
 
-<figure>
-    <img src="imgs/stimulation_timing.png" style="width: 90%; height: auto;">
-    <figcaption align="center">Stimulation timing</figcaption>
-</figure>
+![Stimulation timing](./imgs/stimulation_timing.png)
 
 The possible parameters for the stimulation units are:
 
@@ -331,4 +298,3 @@ The format is as follows:
 ```
 
 As can be seen from the sample, at the highest level there is the program element. Below that there are settings or instructions. In settings there are RecordingSettings, StimulationWaveformSettings and StimulationMapping settings. -->
-.

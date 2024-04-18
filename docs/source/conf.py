@@ -36,12 +36,14 @@ os.environ["PYTHONPATH"] = f"{package_path}:{PYTHON_PATH}"
 docs_path = Path("..").resolve()
 sys.path.insert(1, str(docs_path))
 
+from viperboxinterface import __version__  # noqa: E402
+
 project = "ViperBoxInterface"
 copyright = "2024, Stijn Balk"  # noqa: A001
 author = "Stijn Balk"
 
-version = "0.0.6"
-release = "0.0.6"
+version = __version__
+release = __version__
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -69,7 +71,7 @@ default_role = "autolink"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
-html_logo = "https://github.com/basnijholt/nijho.lt/raw/2cf0045f9609a176cb53422c591fde946459669d/content/project/ViperBoxInterface/ViperBoxInterface-logo.webp"
+html_logo = "https://github.com/sbalk/ViperBoxInterface/blob/dev/imgs/viperboxinterface.png?raw=true"
 
 
 def replace_named_emojis(input_file: Path, output_file: Path) -> None:
@@ -149,13 +151,17 @@ def change_alerts_to_admonitions(input_file: Path, output_file: Path) -> None:
         outfile.write(new_content)
 
 
-def replace_example_links(input_file: Path, output_file: Path) -> None:
-    """Replace relative links to `example/` files with absolute links to GitHub."""
+def replace_image_links(input_file: Path, output_file: Path) -> None:
+    """Replace relative links to `./imgs/` files with absolute links to GitHub."""
     with input_file.open("r") as infile:
         content = infile.read()
-    new_content = content.replace(
-        "(example/",
-        "(https://github.com/basnijholt/ViperBoxInterface/tree/main/example/",
+    new_content = (
+        content.replace(
+            "(./imgs/",
+            "(https://github.com/sbalk/ViperBoxInterface/blob/dev/imgs/",
+        )
+        .replace(".png)", ".png?raw=true)")
+        .replace(".gif)", ".gif?raw=true)")
     )
     with output_file.open("w") as outfile:
         outfile.write(new_content)
@@ -173,6 +179,7 @@ def fix_anchors_with_named_emojis(input_file: Path, output_file: Path) -> None:
         "desktop_computer",
         "hammer_and_wrench",
         "warning",
+        "question",
     ]
     with input_file.open("r") as infile:
         content = infile.read()
@@ -431,7 +438,7 @@ def process_readme_for_sphinx_docs(readme_path: Path, docs_path: Path) -> None:
     output_file = docs_path / "source" / "README.md"
     replace_named_emojis(readme_path, output_file)
     change_alerts_to_admonitions(output_file, output_file)
-    replace_example_links(output_file, output_file)
+    replace_image_links(output_file, output_file)
     fix_anchors_with_named_emojis(output_file, output_file)
 
     # Step 2: Extract the table of contents links from the processed README
