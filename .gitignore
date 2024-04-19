@@ -22,4 +22,7 @@ logs/
 Stimulations/
 untracked/
 defaults/__pycache__/
-setup/DowngradeFTDI/log*
+viperboxinterface/defaults/__pycache__/
+setup/DowngradeFTDI/log/
+viperboxinterface.egg-info/
+viperboxinterface/__pycache__/
