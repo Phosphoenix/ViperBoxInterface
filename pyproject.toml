@@ -26,6 +26,7 @@ dependencies = [
     "pandas",
     "versioningit",
     "psutil",
+    "openpyxl",
 ]
 channels = ["conda-forge"]
 
