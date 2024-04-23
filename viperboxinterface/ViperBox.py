@@ -84,7 +84,7 @@ class ViperBox:
 
         oss = [int(item + 1) for item in range(60)]
         oss = [self.mapping.probe_to_os_map[channel] for channel in oss]
-        self.check_os = oss
+        self.check_this_os = oss
 
         return None
 
@@ -418,7 +418,7 @@ to ViperBox",
         """Set the check OS for the stimulation settings."""
         probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
         oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
-        self.check_os = oss
+        self.check_this_os = oss
         return True, f"Check OS set to {oss}"
 
     # def check_SR(self, lst):
@@ -461,20 +461,17 @@ settings to ViperBox",
                     updated_tmp_settings.boxes[box].probes[probe].os_data,
                 )
                 for OStage in range(128):
-                    if OStage not in self.check_os:
-                        self.logger.debug(
-                            f"Setting permanent discharge on OS {OStage} to False"
-                        )
+                    NVP.setOSStimblank(self._box_ptrs[box], probe, OStage, True)
+                    # set all to NON default value; permanent discharge
+                    # in principle stimulation is now over resistor instead of electrode
+                    NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, True)
+                    if OStage in self.check_this_os:
                         NVP.setOSDischargeperm(
                             self._box_ptrs[box], probe, OStage, False
                         )
-                    else:
-                        self.logger.debug(
-                            f"Setting permanent discharge on OS {OStage} to True"
-                        )
-                        NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, True)
+
                     # NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, False)
-                    NVP.setOSStimblank(self._box_ptrs[box], probe, OStage, True)
+                NVP.writeOsConfiguration(self._box_ptrs[box], probe, False, False)
 
                 for SU in (
                     updated_tmp_settings.boxes[box].probes[probe].stim_unit_sett.keys()

@@ -84,6 +84,7 @@ VB = ViperBox(_session_datetime=session_datetime, start_oe=True)
 
 @app.post("/setos")
 async def setos(oss: str):
+    """Send stimulation current over these OS's."""
     logger.info(f"/setos called with {oss}")
     if oss == "all":
         VB.set_check_os([int(item + 1) for item in range(60)])

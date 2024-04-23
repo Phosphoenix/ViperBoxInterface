@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import json
 import logging
 import logging.handlers
@@ -57,7 +58,7 @@ class ChanSettings:
         for k, v in cls.__annotations__.items():
             if k == "references":
                 tmp_dct[k] = parse_references(env[k])
-            elif not isinstance(env[k], v):
+            elif not isinstance(env[k], getattr(builtins, v)):
                 tmp_dct[k] = int(env[k])
             else:
                 tmp_dct[k] = str(env[k])
