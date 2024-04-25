@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PySimpleGUI as sg
 import requests
-from defaults.defaults import Mappings
 from lxml import etree
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -451,7 +450,8 @@ def run_gui():
             return "light gray"
 
     def get_electrodes(electrode_switch_matrix, save_purpose=False):
-        probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
+        # TMPFIX uncomment
+        # probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
         rows, cols = np.where(np.asarray(electrode_switch_matrix) == "on")
         if save_purpose:
             electrode_list = [
@@ -464,7 +464,8 @@ def run_gui():
                 i * MAX_ROWS + j + 1 for i, j in zip(cols, rows, strict=False)
             ]
             os_list = electrode_list
-            os_list = [probe_mapping.probe_to_os_map[i] for i in electrode_list]
+            # TMPFIX uncomment
+            # os_list = [probe_mapping.probe_to_os_map[i] for i in electrode_list]
             os_list.sort()
             os_list = [str(i) for i in os_list]
             if os_list == []:

@@ -43,7 +43,8 @@ class ViperBox:
     """Class for interacting with the IMEC Neuraviper API."""
 
     NUM_SAMPLES = 500
-    NUM_CHANNELS = 60
+    # TMPFIX should be 60
+    NUM_CHANNELS = 64
     SKIP_SIZE = 20
     FREQ = 20000
     OS_WRITE_TIME = 1
@@ -82,8 +83,9 @@ class ViperBox:
         self.logger.addHandler(socketHandler)
         self.mtx = self._os2chip_mat()
 
-        oss = [int(item + 1) for item in range(60)]
-        oss = [self.mapping.probe_to_os_map[channel] for channel in oss]
+        oss = [int(item + 1) for item in range(128)]
+        # TMPFIX should be uncommented
+        # oss = [self.mapping.probe_to_os_map[channel] for channel in oss]
         self.check_this_os = oss
 
         return None
@@ -378,9 +380,14 @@ to ViperBox",
                             self._box_ptrs[box],
                             probe,
                             channel,
-                            self.mapping.channel_input[channel],
+                            # TMPFIX should be uncommented, not 0
+                            # self.mapping.channel_input[channel],
+                            0,
                         )
                     except KeyError:
+                        self.logger.debug(
+                            f"Input for channel {channel} not found, defaulting to 0"
+                        )
                         NVP.selectElectrode(self._box_ptrs[box], probe, channel, 0)
                     NVP.setReference(
                         self._box_ptrs[box],
@@ -390,6 +397,10 @@ to ViperBox",
                         .probes[probe]
                         .channel[channel]
                         .get_refs,
+                    )
+                    # TMPFIX not necassary
+                    self.logger.debug(
+                        f"reference set: {updated_tmp_settings.boxes[box].probes[probe].channel[channel].get_refs}"
                     )
                     NVP.setGain(
                         self._box_ptrs[box],
@@ -416,8 +427,9 @@ to ViperBox",
 
     def set_check_os(self, oss) -> tuple[bool, str]:
         """Set the check OS for the stimulation settings."""
-        probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
-        oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
+        # TMPFIX both lines should be uncommented
+        # probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
+        # oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
         self.check_this_os = oss
         return True, f"Check OS set to {oss}"
 
@@ -443,9 +455,11 @@ to ViperBox",
     #     return reply
 
     def _upload_stimulation_settings(self, updated_tmp_settings: GeneralSettings):
+        """Uploads the stimulation settings to the ViperBox."""
         self.logger.info(
             f"Writing stimulation settings to ViperBox: {updated_tmp_settings}",
         )
+
         if self.boxless is True:
             self.logger.info(
                 "No box connected, skipping uploading stimulation \
@@ -460,6 +474,9 @@ settings to ViperBox",
                     probe,
                     updated_tmp_settings.boxes[box].probes[probe].os_data,
                 )
+                # TMPFIX print statements might be logs
+                print("printing osdata")
+                print(updated_tmp_settings.boxes[box].probes[probe].os_data)
                 for OStage in range(128):
                     NVP.setOSStimblank(self._box_ptrs[box], probe, OStage, True)
                     # set all to NON default value; permanent discharge
@@ -476,6 +493,7 @@ settings to ViperBox",
                 for SU in (
                     updated_tmp_settings.boxes[box].probes[probe].stim_unit_sett.keys()
                 ):
+                    self.logger.debug(f"Writing SU configuration to {SU}")
                     NVP.writeSUConfiguration(
                         self._box_ptrs[box],
                         probe,
@@ -655,6 +673,11 @@ reverted to previous settings. Error: {self._er(e)}",
             pass
         elif self.tracking.box_connected is False:
             return False, "Not connected to ViperBox"
+        # elif self.tracking.recording is True:
+        #     return (
+        #         False,
+        #         "Recording in progress, cannot change settings. First stop recording.",
+        #     )
 
         if default_values is True:
             XML_data = etree.parse("defaults/default_stimulation_settings.xml")
@@ -675,9 +698,6 @@ reverted to previous settings. Error: {self._er(e)}",
             self.connected,
             "stimulation",
         )
-        # result, feedback = check_xml_with_settings(
-        #     XML_data, tmp_local_settings, "stimulation"
-        # )
 
         if result is False:
             return result, feedback
@@ -1028,7 +1048,7 @@ upload your custom settings and then try again.""",
             os.startfile(r"C:\Program Files\Open Ephys\open-ephys.exe")
 
     def _os2chip_mat(self):
-        mtx = np.zeros((64, 60), dtype="uint16")
+        mtx = np.zeros((64, self.NUM_CHANNELS), dtype="uint16")
         for k, v in self.mapping.electrode_mapping.items():
             mtx[k][v] = 1
         return mtx
@@ -1111,6 +1131,9 @@ upload your custom settings and then try again.""",
     def _SU_list_to_bitmask(self, SU_list: list[int]) -> int:
         # convert SUs to NVP format
         SU_string = "".join(["1" if i in SU_list else "0" for i in range(8)])
+        # COMMIT THIS
+        # SU_string = SU_string[::-1]
+        # self.logger.debug(f"SU_string bitmask (SU8, SU7, .., SU1): {SU_string}")
         return int(SU_string, 2)
 
     def start_stimulation(
@@ -1176,6 +1199,7 @@ settings first""",
                         ),
                     ),
                 )
+                # SU bitmask order is reversed, see _SU_list_to_bitmask
                 SUs = [
                     index + 1
                     for index, char in enumerate(bin(SU_dict[box][probe])[2:])
@@ -1313,7 +1337,7 @@ class _DataSenderThread(threading.Thread):
 
     def _prep_lfilter(self, f0: float = 50.0, Q: float = 30.0, FREQ: int = 20000):
         b, a = signal.iirnotch(f0, Q, FREQ)
-        z = np.zeros((60, 2))
+        z = np.zeros((self.NUM_CHANNELS, 2))
         self.b, self.a, self.z = b, a, z
 
     def _create_header(self, NUM_CHANNELS: int = 60, NUM_SAMPLES: int = 500):
@@ -1335,7 +1359,10 @@ class _DataSenderThread(threading.Thread):
         return time.time_ns() / (10**9)
 
     def _prepare_databuffer(self, databuffer: np.ndarray, z) -> tuple:
-        databuffer = (databuffer @ self.mtx).T
+        # TMPFIX uncomment
+        # databuffer = (databuffer @ self.mtx).T
+        # TMPFIX instead of above
+        databuffer = databuffer.T
         databuffer, z = signal.lfilter(self.b, self.a, databuffer, axis=1, zi=z)
         databuffer = databuffer.astype("uint16")
         databuffer = databuffer.copy(order="C")
@@ -1346,6 +1373,9 @@ class _DataSenderThread(threading.Thread):
         # TODO: How to handle data streams from multiple probes? align on timestamp?
         send_data_read_handle = NVP.streamOpenFile(str(rec_path), probe)
         counter = 0
+        # create a bit of a buffer such that you won't run out of packets
+        # when updating stimulation settings.
+        time.sleep(0.2)
         t0 = self._time()
         while not self.stop_stream.is_set():
             counter += 1
@@ -1354,6 +1384,21 @@ class _DataSenderThread(threading.Thread):
             if count < self.NUM_SAMPLES:
                 print("Out of packets")
                 break
+            # COMMIT THIS
+            # if count == 0:
+            #     print("No packets read.")
+            #     break
+            # if count < self.NUM_SAMPLES:
+            #     print(f"Out of packets; {count} packets read.")
+            #     print(
+            #         "Windows might be busy with other tasks, stop and restart recording."
+            #     )
+            #     time.sleep(0.2)
+            #     counter += 8
+            #     # t2 = self._time()
+            #     # while (t2 - t0) < counter * self.bufferInterval:
+            #     #     t2 = self._time()
+            #     continue
 
             databuffer = np.asarray(
                 [packets[i].data for i in range(self.NUM_SAMPLES)],
@@ -1372,7 +1417,7 @@ class _DataSenderThread(threading.Thread):
         t0 = self._time()
         for i in range(10):
             counter += 1
-            databuffer = np.zeros((60, 500), dtype="uint16").tobytes()
+            databuffer = np.zeros((self.NUM_CHANNELS, 500), dtype="uint16").tobytes()
             self.tcpClient.sendto(self.header + databuffer, self.socket_address)
             t2 = self._time()
             while (t2 - t0) < counter * self.bufferInterval:
