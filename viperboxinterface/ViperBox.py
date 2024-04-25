@@ -1131,9 +1131,8 @@ upload your custom settings and then try again.""",
     def _SU_list_to_bitmask(self, SU_list: list[int]) -> int:
         # convert SUs to NVP format
         SU_string = "".join(["1" if i in SU_list else "0" for i in range(8)])
-        # COMMIT THIS
-        # SU_string = SU_string[::-1]
-        # self.logger.debug(f"SU_string bitmask (SU8, SU7, .., SU1): {SU_string}")
+        SU_string = SU_string[::-1]
+        self.logger.debug(f"SU_string bitmask (SU8, SU7, .., SU1): {SU_string}")
         return int(SU_string, 2)
 
     def start_stimulation(
