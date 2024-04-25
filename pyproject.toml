@@ -25,6 +25,9 @@ dependencies = [
     "scipy",
     "pandas",
     "versioningit",
+    "psutil",
+    "openpyxl",
+    "serial",
 ]
 channels = ["conda-forge"]
 

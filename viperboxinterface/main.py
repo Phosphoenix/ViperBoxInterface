@@ -82,17 +82,23 @@ app = FastAPI(
 VB = ViperBox(_session_datetime=session_datetime, start_oe=True)
 
 
-@app.post("/setos")
-async def setos(oss: str):
-    logger.info(f"/setos called with {oss}")
+@app.post("/set_discharge_off")
+async def set_discharge_off(oss: str):
+    """Send stimulation current over these OS's."""
+    logger.info(f"/set_discharge_off called with {oss}")
     if oss == "all":
-        VB.set_check_os([int(item + 1) for item in range(60)])
+        VB.set_check_os([int(item + 1) for item in range(128)])
+    elif oss == "none":
+        VB.set_check_os([])
+    elif "-" in oss:
+        start, end = oss.split("-")
+        VB.set_check_os([int(item) for item in range(int(start), int(end) + 1)])
     else:
         VB.set_check_os([int(item) for item in oss.split(",")])
     return {"success": True, "feedback": f"Set OS to {oss}"}
 
 
-@app.post("/connect")  # , tags=["connect"])
+@app.post("/connect")  # , tags=["connect"]
 async def init(connect: Connect):
     """Initializes the ViperBoxInterface.
 

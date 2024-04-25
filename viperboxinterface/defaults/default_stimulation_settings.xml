@@ -7,7 +7,7 @@
                 discharge="200" duration="600" aftertrain="1000" />
         </StimulationWaveformSettings>
         <StimulationMappingSettings>
-            <Mapping box="-" probe="-" stimunit="1" electrodes="-" />
+            <Mapping box="-" probe="-" stimunit="1" electrodes="1-128" />
         </StimulationMappingSettings>
     </Settings>
 </Program>

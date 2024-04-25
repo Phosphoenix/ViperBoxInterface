@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import json
 import logging
 import logging.handlers
@@ -57,7 +58,7 @@ class ChanSettings:
         for k, v in cls.__annotations__.items():
             if k == "references":
                 tmp_dct[k] = parse_references(env[k])
-            elif not isinstance(env[k], v):
+            elif not isinstance(env[k], getattr(builtins, v)):
                 tmp_dct[k] = int(env[k])
             else:
                 tmp_dct[k] = str(env[k])
@@ -131,12 +132,13 @@ class ProbeSettings:
     channel: dict[int, ChanSettings] = field(default_factory=dict)
     stim_unit_sett: dict[int, SUSettings] = field(default_factory=dict)
     stim_unit_os: dict[int, list[int]] = field(default_factory=dict)
+    # os_data: bytes = b""
     _sus: int = 8
     _elecs: int = 128
 
-    def SUs_connected(self, stim_unit: int):
-        # return binary string of SU's for a particular SU that have uploaded settings
-        pass
+    # def SUs_connected(self, stim_unit: int):
+    #     # return binary string of SU's for a particular SU that have uploaded settings
+    #     pass
 
     @property
     def os_data(self):
@@ -154,6 +156,7 @@ class ProbeSettings:
                 logger.warning(
                     "Assigned electrode to multiple SU's, this is not allowed.",
                 )
+                # return b""
             else:
                 lst = []
                 for index in range(self._elecs):
@@ -168,9 +171,12 @@ class ProbeSettings:
                 ]
                 return bytes(bytes_list)
 
-    # def get_gains(self):
-    #     np.zeros(64)
-    #     return self.gain_vec
+    # def __setattr__(self, name, value):
+    #     super().__setattr__(name, value)
+    #     if name == "stim_unit_os":
+    #         self.os_data = (
+    #             self.get_os_data()
+    #         )  # Call os_data whenever the values are updated
 
 
 class IDInformation:
