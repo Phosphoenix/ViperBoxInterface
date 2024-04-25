@@ -13,10 +13,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PySimpleGUI as sg
 import requests
+from defaults.defaults import Mappings
 from lxml import etree
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
-from defaults.defaults import Mappings
 
 # matplotlib.use("TkAgg")
 
@@ -464,6 +463,7 @@ def run_gui():
             electrode_list = [
                 i * MAX_ROWS + j + 1 for i, j in zip(cols, rows, strict=False)
             ]
+            os_list = electrode_list
             os_list = [probe_mapping.probe_to_os_map[i] for i in electrode_list]
             os_list.sort()
             os_list = [str(i) for i in os_list]
@@ -971,7 +971,7 @@ press OK',
         "ViperBox Control",
         layout,
         finalize=False,
-        icon=r".\\setup\\logo.ico",
+        icon=r"..\\setup\\logo.ico",
     )
 
     url = "http://127.0.0.1:8000/"
@@ -1019,13 +1019,14 @@ press OK',
         except requests.exceptions.Timeout:
             sg.popup_ok("Connection to ViperBox timed out, is the ViperBox busy?")
         # Start OE and connect to it
-        sg.popup_ok(
+        response = sg.popup_ok_cancel(
             "After you press OK here, you have 10 seconds to press 'CONNECT' \
 in Ephys Socket, in Open Ephys",
         )
-        response = requests.post(url + "connect_oe", timeout=10)
-        if handle_response(response, "Connected to Open Ephys"):
-            pass
+        if response == "OK":
+            response = requests.post(url + "connect_oe", timeout=10)
+            if handle_response(response, "Connected to Open Ephys"):
+                pass
 
     disabled_startup_buttons = [
         # "button_disconnect",
@@ -1071,24 +1072,18 @@ in Ephys Socket, in Open Ephys",
             data = {"probe_list": "1", "emulation": "False", "boxless": "False"}
             response = requests.post(url + "connect", json=data)
             if handle_response(response, "Connected to ViperBox"):
-                # SetLED(window, "led_connect_probe", True)
                 SetLED(window, "led_rec", False)
             else:
-                # SetLED(window, "led_connect_probe", False)
                 SetLED(window, "led_rec", False)
-        # elif event == "button_disconnect":
-        #     response = requests.post(url + "disconnect")
-        #     if handle_response(response, "Disconnected from ViperBox"):
-        #         # SetLED(window, "led_connect_probe", False)
-        #         SetLED(window, "led_rec", False)
         elif event == "button_connect_oe":
-            sg.popup_ok(
+            response = sg.popup_ok_cancel(
                 "After you press OK here, you have 10 seconds to press 'CONNECT' \
-in Ephys Socket, in Open Ephys",
+    in Ephys Socket, in Open Ephys",
             )
-            response = requests.post(url + "connect_oe_reset")
-            if handle_response(response, "Connected to Open Ephys"):
-                pass
+            if response == "OK":
+                response = requests.post(url + "connect_oe_reset", timeout=10)
+                if handle_response(response, "Connected to Open Ephys"):
+                    pass
         elif event == "button_select_recording_folder":
             tmp_path = sg.popup_get_folder("Select recording folder")
             logger.info(f"Updated recordings file path to: {tmp_path}")
@@ -1148,7 +1143,6 @@ Please do the following: \n\
             window["gain_0"].update(button_color="light grey")
             window["gain_1"].update(button_color="light grey")
             window["gain_2"].update(button_color="light grey")
-            window["gain_3"].update(button_color="light grey")
             window[event].update(
                 button_color=toggle_gain_color(event, gain_switch_matrix),
             )
@@ -1201,7 +1195,7 @@ Please do the following: \n\
                     "Configuration": {
                         "box": "-",
                         "probe": "-",
-                        "stimunit": "-",
+                        "stimunit": "1",
                         "polarity": str(values["anodic_cathodic"]),
                         "pulses": str(values["number_of_pulses"]),
                         "prephase": str(values["pulse_delay"]),

@@ -26,3 +26,4 @@ viperboxinterface/defaults/__pycache__/
 setup/DowngradeFTDI/log/
 viperboxinterface.egg-info/
 viperboxinterface/__pycache__/
+viperboxinterface/defaults/electrode_mapping_long_cables.xlsx
