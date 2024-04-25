@@ -1380,24 +1380,17 @@ class _DataSenderThread(threading.Thread):
             counter += 1
             packets = NVP.streamReadData(send_data_read_handle, self.NUM_SAMPLES)
             count = len(packets)
-            if count < self.NUM_SAMPLES:
-                print("Out of packets")
+            if count == 0:
+                print("No packets read.")
                 break
-            # COMMIT THIS
-            # if count == 0:
-            #     print("No packets read.")
-            #     break
-            # if count < self.NUM_SAMPLES:
-            #     print(f"Out of packets; {count} packets read.")
-            #     print(
-            #         "Windows might be busy with other tasks, stop and restart recording."
-            #     )
-            #     time.sleep(0.2)
-            #     counter += 8
-            #     # t2 = self._time()
-            #     # while (t2 - t0) < counter * self.bufferInterval:
-            #     #     t2 = self._time()
-            #     continue
+            if count < self.NUM_SAMPLES:
+                print(f"Out of packets; {count} packets read.")
+                print(
+                    "Windows might be busy with other tasks, stop and restart recording."
+                )
+                time.sleep(0.2)
+                counter += 8
+                continue
 
             databuffer = np.asarray(
                 [packets[i].data for i in range(self.NUM_SAMPLES)],
