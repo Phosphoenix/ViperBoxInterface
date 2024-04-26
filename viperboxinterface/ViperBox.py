@@ -43,13 +43,12 @@ class ViperBox:
     """Class for interacting with the IMEC Neuraviper API."""
 
     NUM_SAMPLES = 500
-    # TMPFIX should be 60
-    NUM_CHANNELS = 64
+    NUM_CHANNELS = 60
     SKIP_SIZE = 20
     FREQ = 20000
     OS_WRITE_TIME = 1
 
-    def __init__(self, _session_datetime: str, start_oe=True) -> None:
+    def __init__(self, _session_datetime: str, start_oe=True, use_mapping=True) -> None:
         """Initialize the ViperBox class."""
         self._working_directory = os.getcwd()
 
@@ -73,6 +72,7 @@ class ViperBox:
         self.start_oe = start_oe
         self.boxless = False
         self.emulation = False
+        self.use_mapping = use_mapping
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -83,9 +83,14 @@ class ViperBox:
         self.logger.addHandler(socketHandler)
         self.mtx = self._os2chip_mat()
 
+        if not self.use_mapping:
+            self.logger.info("Bypassing mapping")
+            self.NUM_CHANNELS = 64
+
+        # Debugging functionality to switch permanent discharge on on these channels
         oss = [int(item + 1) for item in range(128)]
-        # TMPFIX should be uncommented
-        # oss = [self.mapping.probe_to_os_map[channel] for channel in oss]
+        if self.use_mapping:
+            oss = [self.mapping.probe_to_os_map[channel] for channel in oss]
         self.check_this_os = oss
 
         return None
@@ -123,6 +128,7 @@ class ViperBox:
                 self.FREQ,
                 self.NUM_CHANNELS,
                 self.mtx,
+                self.use_mapping,
             )
             self.data_thread.start("", 0, empty=True)
             r = requests.put(
@@ -140,6 +146,7 @@ class ViperBox:
                 self.FREQ,
                 self.NUM_CHANNELS,
                 self.mtx,
+                self.use_mapping,
             )
             self.data_thread.start("", 0, empty=True)
             r = requests.put(
@@ -376,13 +383,14 @@ to ViperBox",
                     updated_tmp_settings.boxes[box].probes[probe].channel.keys()
                 ):
                     try:
+                        input_selection = self.mapping.channel_input[channel]
+                        if not self.use_mapping:
+                            input_selection = 0
                         NVP.selectElectrode(
                             self._box_ptrs[box],
                             probe,
                             channel,
-                            # TMPFIX should be uncommented, not 0
-                            # self.mapping.channel_input[channel],
-                            0,
+                            input_selection,
                         )
                     except KeyError:
                         self.logger.debug(
@@ -398,7 +406,6 @@ to ViperBox",
                         .channel[channel]
                         .get_refs,
                     )
-                    # TMPFIX not necassary
                     self.logger.debug(
                         f"reference set: {updated_tmp_settings.boxes[box].probes[probe].channel[channel].get_refs}"
                     )
@@ -427,9 +434,9 @@ to ViperBox",
 
     def set_check_os(self, oss) -> tuple[bool, str]:
         """Set the check OS for the stimulation settings."""
-        # TMPFIX both lines should be uncommented
-        # probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
-        # oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
+        if self.use_mapping:
+            probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
+            oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
         self.check_this_os = oss
         return True, f"Check OS set to {oss}"
 
@@ -474,9 +481,8 @@ settings to ViperBox",
                     probe,
                     updated_tmp_settings.boxes[box].probes[probe].os_data,
                 )
-                # TMPFIX print statements might be logs
-                print("printing osdata")
-                print(updated_tmp_settings.boxes[box].probes[probe].os_data)
+                self.logger.debug("printing osdata")
+                self.logger.debug(updated_tmp_settings.boxes[box].probes[probe].os_data)
                 for OStage in range(128):
                     NVP.setOSStimblank(self._box_ptrs[box], probe, OStage, True)
                     # set all to NON default value; permanent discharge
@@ -1297,12 +1303,21 @@ class _DataSenderThread(threading.Thread):
         FREQ: int,
         NUM_CHANNELS: int,
         mtx: np.ndarray,
+        use_mapping: bool = True,
         port=9001,
     ):
         super().__init__()
         self.thread = None
         self.stop_stream = None
-        # self.logger = logger
+        self.use_mapping = use_mapping
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        socketHandler = logging.handlers.SocketHandler(
+            "localhost",
+            logging.handlers.DEFAULT_TCP_LOGGING_PORT,
+        )
+        self.logger.addHandler(socketHandler)
 
         self.NUM_SAMPLES = NUM_SAMPLES
         self.FREQ = FREQ
@@ -1313,24 +1328,16 @@ class _DataSenderThread(threading.Thread):
             NUM_CHANNELS=self.NUM_CHANNELS,
             NUM_SAMPLES=self.NUM_SAMPLES,
         )
-        # if port is None:
-        #     port = random.randint(1000, 9999)
-        #     while port == 8000 or port == logging.handlers.DEFAULT_TCP_LOGGING_PORT:
-        #         port = random.randint(1000, 9999)
-        #     config_string = f"ES PORT {port}"
-        #     requests.put(
-        #         "http://localhost:37497/api/processors/111/config",
-        #         json={"text": config_string},
-        #     )
+
         self.mtx = mtx
         self.tcpServer = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.tcpServer.bind(("localhost", port))
         self.tcpServer.listen(1)
         self.tcpServer.settimeout(None)
         self.tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        print("Waiting for external connection to start...")
+        self.logger.info("Waiting for external connection to start...")
         (tcpClient, socket_address) = self.tcpServer.accept()
-        print("Connected.")
+        self.logger.info("Connected.")
         self.tcpClient = tcpClient
         self.socket_address = socket_address
 
@@ -1358,17 +1365,17 @@ class _DataSenderThread(threading.Thread):
         return time.time_ns() / (10**9)
 
     def _prepare_databuffer(self, databuffer: np.ndarray, z) -> tuple:
-        # TMPFIX uncomment
-        # databuffer = (databuffer @ self.mtx).T
-        # TMPFIX instead of above
-        databuffer = databuffer.T
+        if self.use_mapping:
+            databuffer = (databuffer @ self.mtx).T
+        else:
+            databuffer = databuffer.T
         databuffer, z = signal.lfilter(self.b, self.a, databuffer, axis=1, zi=z)
         databuffer = databuffer.astype("uint16")
         databuffer = databuffer.copy(order="C")
         return databuffer.tobytes(), z
 
     def send_data(self, rec_path, probe):
-        print("Started sending data to Open Ephys")
+        self.logger.info("Started sending data to Open Ephys")
         # TODO: How to handle data streams from multiple probes? align on timestamp?
         send_data_read_handle = NVP.streamOpenFile(str(rec_path), probe)
         counter = 0
@@ -1381,11 +1388,11 @@ class _DataSenderThread(threading.Thread):
             packets = NVP.streamReadData(send_data_read_handle, self.NUM_SAMPLES)
             count = len(packets)
             if count == 0:
-                print("No packets read.")
+                self.logger.info("No packets read.")
                 break
             if count < self.NUM_SAMPLES:
-                print(f"Out of packets; {count} packets read.")
-                print(
+                self.logger.info(f"Out of packets; {count} packets read.")
+                self.logger.info(
                     "Windows might be busy with other tasks, stop and restart recording."
                 )
                 time.sleep(0.2)
@@ -1404,7 +1411,7 @@ class _DataSenderThread(threading.Thread):
         NVP.streamClose(send_data_read_handle)
 
     def _send_empty(self):
-        print("Started sending empty data to Open Ephys")
+        self.logger.info("Started sending empty data to Open Ephys")
         counter = 0
         t0 = self._time()
         for i in range(10):
@@ -1417,7 +1424,7 @@ class _DataSenderThread(threading.Thread):
 
     def start(self, recording_path, probe, empty=False):
         if self.thread is not None and self.thread.is_alive():
-            print("Thread already running")
+            self.logger.info("Thread already running")
             return
         if empty:
             self.stop_stream = threading.Event()

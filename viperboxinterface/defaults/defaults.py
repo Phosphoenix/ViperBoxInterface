@@ -20,12 +20,11 @@ class Mappings:
     values for the XML which is also 1-indexed.
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, use_mapping=True):
         self.file_path = file_path
-        # TMPFIX should be removed
-        self.file_path = "defaults/electrode_mapping_long_cables.xlsx"
-        # TMPFIX should be 60
-        self.output_size = 64
+        self.output_size = 60
+        if not use_mapping:
+            self.output_size = 64
         self.get_mappings()
 
     def get_mappings(self):
