@@ -88,10 +88,7 @@ class ViperBox:
             self.NUM_CHANNELS = 64
 
         # Debugging functionality to switch permanent discharge on on these channels
-        oss = [int(item + 1) for item in range(128)]
-        if self.use_mapping:
-            oss = [self.mapping.probe_to_os_map[channel] for channel in oss]
-        self.check_this_os = oss
+        self.permanent_discharge_list = []
 
         return None
 
@@ -432,12 +429,12 @@ to ViperBox",
                 if not self.emulation:
                     NVP.writeChannelConfiguration(self._box_ptrs[box], probe, False)
 
-    def set_check_os(self, oss) -> tuple[bool, str]:
+    def set_permanent_discharge(self, oss) -> tuple[bool, str]:
         """Set the check OS for the stimulation settings."""
         if self.use_mapping:
             probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
             oss = [probe_mapping.probe_to_os_map[channel] for channel in oss]
-        self.check_this_os = oss
+        self.permanent_discharge_list = oss
         return True, f"Check OS set to {oss}"
 
     # def check_SR(self, lst):
@@ -485,15 +482,9 @@ settings to ViperBox",
                 self.logger.debug(updated_tmp_settings.boxes[box].probes[probe].os_data)
                 for OStage in range(128):
                     NVP.setOSStimblank(self._box_ptrs[box], probe, OStage, True)
-                    # set all to NON default value; permanent discharge
-                    # in principle stimulation is now over resistor instead of electrode
-                    NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, True)
-                    if OStage in self.check_this_os:
-                        NVP.setOSDischargeperm(
-                            self._box_ptrs[box], probe, OStage, False
-                        )
-
-                    # NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, False)
+                    NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, False)
+                    if OStage in self.permanent_discharge_list:
+                        NVP.setOSDischargeperm(self._box_ptrs[box], probe, OStage, True)
                 NVP.writeOsConfiguration(self._box_ptrs[box], probe, False, False)
 
                 for SU in (
