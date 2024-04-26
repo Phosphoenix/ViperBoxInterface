@@ -16,10 +16,12 @@ import requests
 from lxml import etree
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from viperboxinterface.defaults.defaults import Mappings
+
 # matplotlib.use("TkAgg")
 
 
-def run_gui():
+def run_gui(use_mapping: bool = True) -> None:
     visibility_swap = True
 
     logger = logging.getLogger("GUI")
@@ -449,9 +451,11 @@ def run_gui():
             electrode_switch_matrix[row][col] = "off"
             return "light gray"
 
-    def get_electrodes(electrode_switch_matrix, save_purpose=False):
-        # TMPFIX uncomment
-        # probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
+    def get_electrodes(
+        electrode_switch_matrix, use_mapping=use_mapping, save_purpose=False
+    ):
+        if use_mapping:
+            probe_mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
         rows, cols = np.where(np.asarray(electrode_switch_matrix) == "on")
         if save_purpose:
             electrode_list = [
@@ -463,9 +467,10 @@ def run_gui():
             electrode_list = [
                 i * MAX_ROWS + j + 1 for i, j in zip(cols, rows, strict=False)
             ]
-            os_list = electrode_list
-            # TMPFIX uncomment
-            # os_list = [probe_mapping.probe_to_os_map[i] for i in electrode_list]
+            if use_mapping:
+                os_list = [probe_mapping.probe_to_os_map[i] for i in electrode_list]
+            else:
+                os_list = electrode_list
             os_list.sort()
             os_list = [str(i) for i in os_list]
             if os_list == []:

@@ -26,6 +26,7 @@ from viperboxinterface.ViperBox import ViperBox
 # TODO: all return values should be caught and logged
 
 session_datetime = time.strftime("%Y%m%d_%H%M%S")
+use_mapping = True
 
 multiprocessing.Process(
     target=VB_logger.start_log_server,
@@ -33,7 +34,9 @@ multiprocessing.Process(
     daemon=True,
 ).start()
 
-multiprocessing.Process(target=gui.run_gui, daemon=True).start()
+multiprocessing.Process(
+    target=gui.run_gui, kwargs={"use_mapping": use_mapping}, daemon=True
+).start()
 
 logger = logging.getLogger("SERVER")
 logger.setLevel(logging.DEBUG)
@@ -79,7 +82,9 @@ app = FastAPI(
     },
 )
 
-VB = ViperBox(_session_datetime=session_datetime, start_oe=True)
+VB = ViperBox(
+    _session_datetime=session_datetime, start_oe=True, use_mapping=use_mapping
+)
 
 
 @app.post("/connect")  # , tags=["connect"]
