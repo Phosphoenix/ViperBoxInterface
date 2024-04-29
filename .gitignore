@@ -2,9 +2,7 @@ __pycache__/*
 .pytest_cache
 .ruff_cache
 .ipynb_checkpoints/
-.pre-commit-config.yaml
 testing.ipynb
-
 *.log
 
 ~$*
@@ -15,7 +13,9 @@ gold_ui.py
 
 start_phx.bat
 
-docs/
+docs/build/
+docs/source/_static/
+docs/source/_templates/
 Recordings/
 Settings/
 logs/
