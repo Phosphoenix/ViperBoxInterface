@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 from lxml import etree
-from VB_classes import (
+
+from viperboxinterface.data_classes import (
     BoxSettings,
     ChanSettings,
     ConnectedBoxes,

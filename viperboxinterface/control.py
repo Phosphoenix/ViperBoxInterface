@@ -25,8 +25,7 @@ from XML_handler import (
 )
 
 import viperboxinterface.NeuraviperPy as NVP
-from viperboxinterface.defaults.defaults import Mappings
-from viperboxinterface.VB_classes import (
+from viperboxinterface.data_classes import (
     BoxSettings,
     ConnectedBoxes,
     ConnectedProbes,
@@ -35,6 +34,7 @@ from viperboxinterface.VB_classes import (
     StatusTracking,
     parse_numbers,
 )
+from viperboxinterface.mappings import Mappings
 
 # TODO: implement rotation of logs to not hog up memory
 

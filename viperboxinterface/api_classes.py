@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from pydantic import BaseModel, field_validator
 from pydantic.dataclasses import dataclass
 
-from viperboxinterface.VB_classes import parse_numbers
+from viperboxinterface.data_classes import parse_numbers
 
 """
 The following classes are used to validate the input from the API.

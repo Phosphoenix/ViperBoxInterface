@@ -12,7 +12,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
-from viperboxinterface import VB_logger, gui
+from viperboxinterface import gui, logger
 from viperboxinterface.api_classes import (
     Connect,
     apiRecSettings,
@@ -21,7 +21,7 @@ from viperboxinterface.api_classes import (
     apiStimSettings,
     apiVerifyXML,
 )
-from viperboxinterface.ViperBox import ViperBox
+from viperboxinterface.control import ViperBox
 
 # TODO: all return values should be caught and logged
 
@@ -29,7 +29,7 @@ session_datetime = time.strftime("%Y%m%d_%H%M%S")
 use_mapping = True
 
 multiprocessing.Process(
-    target=VB_logger.start_log_server,
+    target=logger.start_log_server,
     args=(session_datetime,),
     daemon=True,
 ).start()
