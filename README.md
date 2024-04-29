@@ -1,9 +1,9 @@
 # :brain: ViperBoxInterface
 
-![Overview of all the settings for one ViperBox](./imgs/viperboxinterface.png)
-
 > ViperBoxInterface is a piece of software that streamlines interaction with the ViperBox developed for the NeuraViPeR project.
 > It sends recording data to [Open Ephys](#open-ephys).
+
+![Overview of all the settings for one ViperBox](./imgs/viperboxinterface.png)
 
 <!-- toc-start -->
 
@@ -34,6 +34,8 @@
 
 ## :desktop_computer: Installation and usage
 
+To be able to use this software, you need to have a computer with Windows 10 or newer installed and a ViperBox.
+
 ### Installation
 
 To install the software, please follow these steps:
@@ -52,29 +54,29 @@ To install the software, please follow these steps:
 
 ### ViperBox GUI
 
-When starting the software, the gui will always start as well. In the background, the server is also stated which gives you access to the API (see chapter [Using the API](#using-the-api)).
+When starting the software, the gui will start as well. In the background, the server is also started, which gives you access to the API (see chapter [Using the API](#using-the-api)). After starting, the API docs are accessible [here](http://127.0.0.1:8000/docs).
+
+#### ViperBox GUI usage
 
 ![ViperBox GUI](./imgs/viperbox_gui.png)
 
-![Open Ephys GUI](./imgs/oe_gui.png)
+In *ViperBox control*, you can:
 
-#### ViperBox Control usage
-
-In *ViperBox control*, you can
-
-- Connect to the ViperBox and connect to Open Ephys. This happens automatically when you start the software.
+- Connect to the ViperBox and connect to Open Ephys. Both happen automatically when you start the software.
 - Change recording file name and location and start and stop the acquisition. You'll see the recorded data in the Open Ephys GUI. You can also stimulate if you are recording.
-- Upload settings to the ViperBox. You can either upload the recording or stimulation settings you set in the GUI or you can upload default settings. The default settings are located in the `defaults` folder. You can edit these to your liking.
+- Upload settings to the ViperBox. You can either upload the recording or stimulation settings you set in the GUI with the buttons `Recording settings` and `Stimulation settings`. You can also load default settings, these are read from a file, located in the `defaults` folder. You can edit these to your liking.
 
 In *Recording settings*, you can change the recording settings. In the IMTEK probes and the short wired MZIPA, only the body [reference](#references-and-input-settings) is connected to the ASIC. To use the correct gain, please refer to [Gain settings](#gain-settings). To change from which electrode you want to record, refer to [Choosing probe electrodes](#choosing-probe-electrodes).
 
-In *Waveform settings*, you can change the stimulation waveform.
+In *Waveform settings*, you can change the stimulation waveform, see [Stimulation settings][#stimulation-settings].
 
 In *Pulse preview*, you can preview the stimulation waveform after you press `Reload`.
 
 In *Stimulation electrode selection*, you can select from which electrodes you want to stimulate.
 
 #### Open Ephys GUI usage
+
+![Open Ephys GUI](./imgs/oe_gui.png)
 
 The Open Ephys GUI is an open-source, plugin-based application for acquiring extracellular electrophysiology data. It was designed by neuroscientists to make their experiments more flexible and enjoyable. The full documentation can be found [here](https://open-ephys.github.io/gui-docs/User-Manual/Exploring-the-user-interface.html).
 
@@ -90,7 +92,7 @@ Data can be saved in binary, Open Ephys Format and NWB format. The Open Ephys Fo
 ### Gain settings
 
 > [!WARNING]
-> To correctly view the voltage levels in Open Ephys, the following scaling and offset numbers need to be supplied to the Ephys Socket in Open ephys:
+> To correctly view the voltage levels in Open Ephys, the following scaling and offset numbers need to be supplied to the Ephys Socket in Open ephys.
 
 | Gain | Scale | Offset |
 | ---- | ----- | ------ |
@@ -98,9 +100,9 @@ Data can be saved in binary, Open Ephys Format and NWB format. The Open Ephys Fo
 | 24   | 11.2  | 2048   |
 | 12   | 19.8  | 2048   |
 
-![Screenshot of Ephys Socket in Open Ephys](./imgs/ephys_socket_scale_offset.png)
+To change these settings, first you need to stop the acquistion of data in **Open Ephys** by clicking the yellow play button in the top right of the screen. Then you can click 'DISCONNECT' in the Ephys Socket module. After that, you can change the values in the 'Scale' field. After changing the values, go to the ViperBox GUI and click 'Connect Open Ephys', then click 'CONNECT' in the Ephys Socket module.
 
-To change these settings, first you need to stop the acquistion of data in Open Ephys by clicking the yellow play button in the top right of the screen. Then you can click 'DISCONNECT' in the Ephys Socket module. After that, you can change the values in the 'Scale' field. After changing the values, go to the ViperBox interface and click 'Connect Open Ephys', then click 'CONNECT' in the Ephys Socket module.
+![Screenshot of Ephys Socket in Open Ephys](./imgs/ephys_socket_scale_offset.png)
 
 ### References and input settings
 
@@ -109,6 +111,26 @@ Reference settings are wired in the chip in the following way. For each of the 6
 This signal is compared to any or all of the references (which you can select in the GUI). In principle, the body reference should always be used.
 
 ![Connection of recording channel (left) with recording electrodes (top right) and references (bottom right)](./imgs/references.png)
+
+### Stimulation settings
+
+![Stimulation timing](./imgs/stimulation_timing.png)
+
+The possible parameters for the stimulation units are:
+
+| Setting      | Description                                              | Unit    | Range     | Step size | Default |
+| ------------ | -------------------------------------------------------- | ------- | --------- | --------- | ------- |
+| `polarity`   | Polarity of the stimulation waveform                     | boolean | 0-1       | 1         | 0       |
+| `pulses`     | Number of pulses in the waveform                         | number  | 1-255     | 1         | 20      |
+| `prephase`   | Time in microseconds before the first pulse              | μs      | 100-25500 | 100       | 0       |
+| `amplitude1` | Amplitude of the first phase                             | μA      | 0-255     | 1         | 5       |
+| `width1`     | Width of the first phase                                 | μs      | 10-2550   | 10        | 170     |
+| `interphase` | Time between the first and second phase                  | μs      | 10-25500  | 10        | 60      |
+| `amplitude2` | Amplitude of the second phase                            | μA      | 0-255     | 1         | 5       |
+| `width2`     | Width of the second phase                                | μs      | 10-2550   | 10        | 170     |
+| `discharge`  | Time in microseconds after the last pulse                | μs      | 100-25500 | 100       | 200     |
+| `duration`   | Duration of the entire train                             | μs      | 100-25500 | 100       | 600     |
+| `aftertrain` | Time in microseconds after the entire train has finished | μs      | 100-25500 | 100       | 1000    |
 
 ### Choosing probe electrodes
 
@@ -128,10 +150,9 @@ Note that in the resulting recording in Open Ephys, the 'Duplicate' channels wil
 
 ## :robot: Using the API
 
-The API can be used to communicate with the ViperBox. It can be used to connect to the ViperBox, upload recording and stimulation settings and start and stop recordings and stimulations.
-The API can be manually controlled from the [web interface](http://127.0.0.1:8000/docs) by clicking the dropdown next to the function, then clicking "Try it out" and then clicking the blue "Execute" button.
+The API can be used to communicate with the ViperBox and has access to most functionality.
+The API can also be manually controlled from the [web interface](http://127.0.0.1:8000/docs) by clicking the dropdown next to the function, then clicking "Try it out" on the right and then clicking the blue "Execute" button.
 The typical workflow to do a recording and stimulation is to run the following commands:
-- `/connect`: to connect to the ViperBox
 - `/upload_recording_settings`: to upload the recording settings. Default [XML settings](#xml-scripts) are selected by default.
   - To edit the settings, open an editor and copy the default settings from the defaults folder into it. Adjust them and copy and paste everything into the ViperBox API. See below.
 
@@ -144,7 +165,9 @@ The typical workflow to do a recording and stimulation is to run the following c
 
 During a recording, new stimulation settings can be uploaded and a new stimulation can be started.
 
-## :hammer_and_wrench: Overview of ViperBox settings
+## :hammer_and_wrench: Changing settings through XML scripts
+
+### Overview of all settings
 
 ![Overview of all the settings for one ViperBox](./imgs/settings_mindmap.png)
 
@@ -154,11 +177,9 @@ During a recording, new stimulation settings can be uploaded and a new stimulati
 - stimunit connected electrodes: each stimunit can be connected to any or all of the 128 electrodes.
 - recording channels: each box has 64 recording channels that each have several settings
 
-## :memo: Changing settings through XML scripts
-
 The way to communicate settings with the ViperBox is through XML scripts. These scripts can be used to define settings and to start and stop recording and stimulation. The XML scripts can be sent to the ViperBox through the API.
 
-### RecordingSettings
+### XML recording settings
 
 Here is an example for setting the recording settings in XML format. The default recording settings are the following:
 ```xml
@@ -200,7 +221,7 @@ You can also specify the settings more precisely. For example, if you want recor
 
 In the above case, the first line will be loaded to the ViperBox first and then the latter channel settings will be overwritten to the specific channels.
 
-### Stimulation settings
+### XML stimulation settings
 
 The default stimulation settings are the following:
 ```xml
@@ -222,23 +243,6 @@ The default stimulation settings are the following:
 In StimulationWaveformSettings, `stimunit` means stimulation unit which is a waveform generator, there are 8 stimulation units per probe.
 In StimulationMappingSettings, these stimulation units can be connected to any or all of the electrodes.
 
-![Stimulation timing](./imgs/stimulation_timing.png)
-
-The possible parameters for the stimulation units are:
-
-| Setting      | Description                                              | Unit    | Range     | Step size | Default |
-| ------------ | -------------------------------------------------------- | ------- | --------- | --------- | ------- |
-| `polarity`   | Polarity of the stimulation waveform                     | boolean | 0-1       | 1         | 0       |
-| `pulses`     | Number of pulses in the waveform                         | number  | 1-255     | 1         | 20      |
-| `prephase`   | Time in microseconds before the first pulse              | μs      | 100-25500 | 100       | 0       |
-| `amplitude1` | Amplitude of the first phase                             | μA      | 0-255     | 1         | 5       |
-| `width1`     | Width of the first phase                                 | μs      | 10-2550   | 10        | 170     |
-| `interphase` | Time between the first and second phase                  | μs      | 10-25500  | 10        | 60      |
-| `amplitude2` | Amplitude of the second phase                            | μA      | 0-255     | 1         | 5       |
-| `width2`     | Width of the second phase                                | μs      | 10-2550   | 10        | 170     |
-| `discharge`  | Time in microseconds after the last pulse                | μs      | 100-25500 | 100       | 200     |
-| `duration`   | Duration of the entire train                             | μs      | 100-25500 | 100       | 600     |
-| `aftertrain` | Time in microseconds after the entire train has finished | μs      | 100-25500 | 100       | 1000    |
 
 ## :question: (F)AQ
 
