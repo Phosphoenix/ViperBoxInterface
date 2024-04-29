@@ -29,10 +29,9 @@ import textwrap
 from pathlib import Path
 
 package_path = Path("../..").resolve()
-# sys.path.insert(0, str(package_path))
+sys.path.insert(0, str(package_path))
 PYTHON_PATH = os.environ.get("PYTHONPATH", "")
 os.environ["PYTHONPATH"] = f"{package_path}:{PYTHON_PATH}"
-sys.path.insert(0, os.path.abspath("../../viperboxinterface"))
 
 docs_path = Path("..").resolve()
 sys.path.insert(1, str(docs_path))
@@ -405,19 +404,19 @@ def write_index_file(docs_path: Path, toctree_entries: list[str]) -> None:
     # Constructing the content using textwrap.dedent for better readability
     content = textwrap.dedent(
         """
-        ```
-        {{include}} introduction.md
+            ```{{include}} introduction.md
+            ```
 
-        {{toctree}}
-        :hidden: true
-        :maxdepth: 2
-        :glob:
+            ```{{toctree}}
+            :hidden: true
+            :maxdepth: 2
+            :glob:
 
-        introduction
-        {pages}
-        reference/index
-        ```
-    """,
+            introduction
+            {pages}
+            reference/index
+            ```
+        """,
     ).format(pages=pages)
 
     # Write the content to the file
