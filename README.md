@@ -1,4 +1,4 @@
-# :brain: ViperBoxInterface
+# ViperBoxInterface
 
 ![Overview of all the settings for one ViperBox](./imgs/viperboxinterface.png)
 
@@ -12,19 +12,19 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [:desktop_computer: Using the GUI](#desktop_computer-using-the-gui)
+- [Using the GUI](#desktop_computer-using-the-gui)
   - [Starting up](#starting-up)
     - [ViperBox Control usage](#viperbox-control-usage)
     - [Open Ephys GUI usage](#open-ephys-gui-usage)
   - [Recording](#recording)
-- [:gear: Settings](#gear-settings)
+- [Settings](#gear-settings)
   - [Gain settings](#gain-settings)
   - [References and input settings](#references-and-input-settings)
   - [Choosing probe electrodes](#choosing-probe-electrodes)
-- [:question: (F)AQ](#question-faq)
-- [:robot: Using the API](#robot-using-the-api)
-- [:hammer_and_wrench: Overview of ViperBox settings](#hammer_and_wrench-overview-of-viperbox-settings)
-- [:memo: Changing settings through XML scripts](#memo-changing-settings-through-xml-scripts)
+- [(F)AQ](#question-faq)
+- [Using the API](#robot-using-the-api)
+- [Overview of ViperBox settings](#hammer_and_wrench-overview-of-viperbox-settings)
+- [Changing settings through XML scripts](#memo-changing-settings-through-xml-scripts)
   - [RecordingSettings](#recordingsettings)
   - [Stimulation settings](#stimulation-settings)
 
@@ -32,7 +32,7 @@
 
 <!-- toc-end -->
 
-## :desktop_computer: Installation and usage
+## Installation and usage
 
 ### Installation
 
@@ -85,7 +85,7 @@ Recording can be done in the top of he Open Ephys interface.
 
 Data can be saved in binary, Open Ephys Format and NWB format. The Open Ephys Format useful for loading the data into NeuroExplorer from which it can then be exported into .NEX or .NEX5 format. The formats are not available out of the box, to install them, please [follow the instructions](https://open-ephys.github.io/gui-docs/User-Manual/Recording-data/index.html).
 
-## :gear: Settings
+## Settings
 
 ### Gain settings
 
@@ -126,7 +126,7 @@ Note that in the resulting recording in Open Ephys, the 'Duplicate' channels wil
 
 ![Manage electrode - channel mapping](./imgs/electrode_mapping_short_cables.png)
 
-## :robot: Using the API
+## Using the API
 
 The API can be used to communicate with the ViperBox. It can be used to connect to the ViperBox, upload recording and stimulation settings and start and stop recordings and stimulations.
 The API can be manually controlled from the web interface by clicking the dropdown next to the function, then clicking "Try it out" and then clicking the blue "Execute" button.
@@ -145,7 +145,7 @@ The typical workflow to do a recording and stimulation is to run the following c
 
 During a recording, new stimulation settings can be uploaded and a new stimulation can be started.
 
-## :hammer_and_wrench: Overview of ViperBox settings
+## Overview of ViperBox settings
 
 ![Overview of all the settings for one ViperBox](./imgs/settings_mindmap.png)
 
@@ -155,7 +155,7 @@ During a recording, new stimulation settings can be uploaded and a new stimulati
 - stimunit connected electrodes: each stimunit can be connected to any or all of the 128 electrodes.
 - recording channels: each box has 64 recording channels that each have several settings
 
-## :memo: Changing settings through XML scripts
+## Changing settings through XML scripts
 
 The way to communicate settings with the ViperBox is through XML scripts. These scripts can be used to define settings and to start and stop recording and stimulation. The XML scripts can be sent to the ViperBox through the API.
 
@@ -241,7 +241,7 @@ The possible parameters for the stimulation units are:
 | `duration`   | Duration of the entire train                             | μs      | 100-25500 | 100       | 600     |
 | `aftertrain` | Time in microseconds after the entire train has finished | μs      | 100-25500 | 100       | 1000    |
 
-## :question: (F)AQ
+## (F)AQ
 
 - **Q**: The shortcut is not working, what can I do?
     - **A**: This is probably due to the fact that PowerShell doesn't have rights as to execute the startup script, in particular, the `conda` command. There is a whole StackOverflow thread about this [here](https://stackoverflow.com/questions/64149680/how-can-i-activate-a-conda-environment-from-powershell). Probably the following might help:
