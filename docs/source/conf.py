@@ -71,7 +71,7 @@ default_role = "autolink"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
-html_logo = "https://github.com/sbalk/ViperBoxInterface/blob/main/imgs/viperboxinterface.png?raw=true"
+html_logo = "https://github.com/sbalk/ViperBoxInterface/blob/dev/imgs/viperboxinterface.png?raw=true"
 
 
 def replace_named_emojis(input_file: Path, output_file: Path) -> None:
@@ -158,7 +158,7 @@ def replace_image_links(input_file: Path, output_file: Path) -> None:
     new_content = (
         content.replace(
             "(./imgs/",
-            "(https://github.com/sbalk/ViperBoxInterface/blob/main/imgs/",
+            "(https://github.com/sbalk/ViperBoxInterface/blob/dev/imgs/",
         )
         .replace(".png)", ".png?raw=true)")
         .replace(".gif)", ".gif?raw=true)")
@@ -180,8 +180,6 @@ def fix_anchors_with_named_emojis(input_file: Path, output_file: Path) -> None:
         "hammer_and_wrench",
         "warning",
         "question",
-        "brain",
-        "books",
     ]
     with input_file.open("r") as infile:
         content = infile.read()
