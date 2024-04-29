@@ -29,9 +29,10 @@ import textwrap
 from pathlib import Path
 
 package_path = Path("../..").resolve()
-sys.path.insert(0, str(package_path))
+# sys.path.insert(0, str(package_path))
 PYTHON_PATH = os.environ.get("PYTHONPATH", "")
 os.environ["PYTHONPATH"] = f"{package_path}:{PYTHON_PATH}"
+sys.path.insert(0, os.path.abspath("../../viperboxinterface"))
 
 docs_path = Path("..").resolve()
 sys.path.insert(1, str(docs_path))
@@ -52,8 +53,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
-    "myst_parser",
-    "sphinx_autodoc_typehints",
+    # "myst_parser",
+    # "sphinx_autodoc_typehints",
 ]
 
 
