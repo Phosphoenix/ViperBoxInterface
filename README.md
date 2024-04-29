@@ -34,7 +34,7 @@
 
 ## :desktop_computer: Installation and usage
 
-To be able to use this software, you need to have a computer with Windows 10 or newer installed and a ViperBox.
+To be able to use this software, you need to have a computer with Windows 10 or newer installed. To do experiments, you also need a ViperBox.
 
 ### Installation
 
@@ -50,7 +50,12 @@ To install the software, please follow these steps:
     - Activate the environment by running `conda activate viperbox`
     - Install conda with `conda install -c conda-forge unidep -y`
     - Run `unidep install .`
-- Optionally, create a desktop shortcut by right-clicking the `create_shortcut.ps1` file and selecting "Run with PowerShell"
+- To create a desktop shortcut, navigate to the `setup` folder and right-click the `create_shortcut.ps1` file and select "Run with PowerShell"
+- OR If you don't have a shortcut, you can start the software with the following steps:
+    - Open an Anaconda prompt
+    - Activate the environment by running `conda activate viperbox`
+    - Navigate to the folder by running `cd viperboxinterface`
+    - Run the software by running `uvicorn server:app`
 
 ### ViperBox GUI
 
@@ -167,17 +172,20 @@ During a recording, new stimulation settings can be uploaded and a new stimulati
 
 ## :hammer_and_wrench: Changing settings through XML scripts
 
+The settings of the ViperBox can be controlled through XML scripts. The XML scripts can be sent to the ViperBox through the API.
+
 ### Overview of all settings
+
+To understand the settings better, please refer to this mindmap:
 
 ![Overview of all the settings for one ViperBox](./imgs/settings_mindmap.png)
 
-- box: there are up to 3 boxes
-- probes: each box can have up to 4 probes connected to them
-- stimunit waveform settings: define the waveform that the stimunit generates
-- stimunit connected electrodes: each stimunit can be connected to any or all of the 128 electrodes.
-- recording channels: each box has 64 recording channels that each have several settings
-
-The way to communicate settings with the ViperBox is through XML scripts. These scripts can be used to define settings and to start and stop recording and stimulation. The XML scripts can be sent to the ViperBox through the API.
+The settings can have the following high-level components:
+- *box*: This is the actual ViperBox, up to three boxes can be connected to the software
+- *probes*: Each box can have up to 4 probes connected to them, these are the chips.
+- *stimunit waveform settings*: Every chip has 8 waveform generators that can be set. These are also called stimunits or stimulation units.
+- *stimunit connected electrodes*: Each stimunit can be connected to any or all of the 128 electrodes. Note that an electrode can only be connected to a maximum of 1 stimunits.
+- *recording channels*: each box has 64 recording channels that each have several settings. Note that a recording channel can only be connected to 1 of four electrodes.
 
 ### XML recording settings
 
@@ -187,7 +195,7 @@ Here is an example for setting the recording settings in XML format. The default
 <Program>
     <Settings>
         <RecordingSettings>
-            <Channel box="-" probe="-" channel="-" references="-" gain="1" input="0"/>
+            <Channel box="-" probe="-" channel="-" references="-" gain="0" input="0"/>
         </RecordingSettings>
     </Settings>
 </Program>
@@ -199,7 +207,7 @@ In the above code, the default recording settings are stored in the `Channel` el
 - `probe="-"` means for all probes that are connected.
 - `channel="-"` means for all recording channels (always 64).
 - `references="-"` means all [reference](#references-and-input-settings), this means the Body reference and references 1-8.
-- `gain="1"` means the channel [gain](#gain-settings). The possible values are:
+- `gain="0"` means the channel [gain](#gain-settings). The possible values are:
     - "0": x 60
     - "1": x 24
     - "2": x 12
@@ -243,6 +251,7 @@ The default stimulation settings are the following:
 In StimulationWaveformSettings, `stimunit` means stimulation unit which is a waveform generator, there are 8 stimulation units per probe.
 In StimulationMappingSettings, these stimulation units can be connected to any or all of the electrodes.
 
+The possible parameters for the stimulation units are discussed in the chapter [Stimulation settings](#stimulation-settings).
 
 ## :question: (F)AQ
 
@@ -257,6 +266,7 @@ In StimulationMappingSettings, these stimulation units can be connected to any o
 - **Q**: The software is not responding, what can I do?
     - **A**: Often, the best solution is to close all running instances of the software and hardware. This means pressing the power button on the ViperBox to shut it down and closing the software. If the software is stuck, you can got to Windows Task Manager and find a process called 'Python' and end it. Then, restart the software and the ViperBox.
     - Note: if you are running some other Python software, you won't be able to discern between the two. Don't stop a process if this can cause problems. If this doesn't work, restart the computer.
+
 - **Q**: What do the colors of the LED's on the ViperBox mean?
     - **A**: The LED's on the ViperBox have the following meanings:
         - ViperBox power button side
