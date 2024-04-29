@@ -1,7 +1,7 @@
 # 🔌 API documentation
 
 ```{toctree}
-viperboxinterface
+viperboxinterface.ViperBox
 viperboxinterface.main
 viperboxinterface.VB_classes
 viperboxinterface.gui
