@@ -977,7 +977,7 @@ press OK',
         "ViperBox Control",
         layout,
         finalize=False,
-        icon=r"..\\setup\\logo.ico",
+        icon=r"..\\imgs\\logo.ico",
     )
 
     url = "http://127.0.0.1:8000/"
