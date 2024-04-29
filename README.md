@@ -3,7 +3,7 @@
 ![Overview of all the settings for one ViperBox](./imgs/viperboxinterface.png)
 
 > ViperBoxInterface is a piece of software that streamlines interaction with the ViperBox developed for the NeuraViPeR project.
-> It streams data through [Open Ephys](#open-ephys).
+> It sends recording data to [Open Ephys](#open-ephys).
 
 <!-- toc-start -->
 
@@ -32,23 +32,27 @@
 
 <!-- toc-end -->
 
-You need to create a conda environment named 'viperbox' and install the packages in setup/environment.yaml. You can do this by running `conda create --name viperbox --file [path-to-viperboxinterface-folder]/setup/viperbox.yaml`.
- No startup shortcut will be created.
+## :desktop_computer: Installation and usage
 
-## :desktop_computer: Using the GUI
+### Installation
 
-The GUI can be used to control the ViperBox directly.
+To install the software, please follow these steps:
+- Install Anaconda from [here](https://www.anaconda.com/download/success)
+- Install Open Ephys from [here](https://open-ephys.org/gui)
+- Install the ViperBoxInterface:
+    - Open an anaconda prompt by pressing Start and typing "Anaconda Powershell Prompt" and pressing enter
+    - Navigate to the folder where you want to download the software by typing `cd <path to the folder>`
+    - Clone the repository by running `git clone git@github.com:sbalk/ViperBoxInterface.git`
+    - Navigate to the folder by running `cd ViperBoxInterface`
+    - Create a new conda environment by running `conda create --name viperbox python=3.11`
+    - Activate the environment by running `conda activate viperbox`
+    - Install conda with `conda install -c conda-forge unidep -y`
+    - Run `unidep install .`
+- Optionally, create a desktop shortcut by right-clicking the `create_shortcut.ps1` file and selecting "Run with PowerShell"
 
-### Starting up
+### ViperBox GUI
 
-The installation script creates a shortcut on the desktop called "ViperBoxAPI". Three screens will be opened; the ViperBox Control, the Open Ephys GUI and a terminal. If this didn't work out for some reason, you can also start the software by navigating to the folder where the software is downloaded and double-click start_app.bat.
-
-If that doesn't work (see [FAQ](#faq)), you can start the software by following these steps (also make sure you have the latest version of the software):
-
-1. Open Anaconda Prompt (you can find it by searching for it in the start menu)
-2. Type `conda activate viperbox` and press enter
-3. Navigate to the folder where the software is downloaded by typing `cd <path to the folder>`
-4. Type `uvicorn main:app --reload` and press enter
+When starting the software, the gui will always start as well. In the background, the server is also stated which gives you access to the API (see chapter [Using the API](#using-the-api)).
 
 ![ViperBox GUI](./imgs/viperbox_gui.png)
 
@@ -74,7 +78,7 @@ In *Stimulation electrode selection*, you can select from which electrodes you w
 
 The Open Ephys GUI is an open-source, plugin-based application for acquiring extracellular electrophysiology data. It was designed by neuroscientists to make their experiments more flexible and enjoyable. The full documentation can be found [here](https://open-ephys.github.io/gui-docs/User-Manual/Exploring-the-user-interface.html).
 
-### Recording
+### Recording data
 
 Recording can be done in the top of he Open Ephys interface.
 ![Recording settings in Open Ephys](./imgs/recording_instructions.png)
@@ -122,40 +126,12 @@ Note that in the resulting recording in Open Ephys, the 'Duplicate' channels wil
 
 ![Manage electrode - channel mapping](./imgs/electrode_mapping_short_cables.png)
 
-## :question: (F)AQ
-
-- **Q**: Open Ephys doesn't show any data, what can I do?
-    - **A**: In the bottom left, click the connect button in the signal chain in the Ephys Socket module. After that, click the play button in the top right of the Open Ephys window.
-- **Q**: The shortcut is not working, what can I do?
-    - **A**: This is probably due to the fact that PowerShell doesn't have rights as to execute the startup script, in particular, the `conda` command. There is a whole StackOverflow thread about this [here](https://stackoverflow.com/questions/64149680/how-can-i-activate-a-conda-environment-from-powershell). Probably the following might help:
-
-        1. Open PowerShell and browse to `condabin` folder in your Conda installation directory, for example: `C:\Users\<username>\anaconda3\condabin`
-        2. Run `./conda init powershell` in that folder, and reopen the PowerShell.
-        3. Please note: If you encountered `ps1 cannot be loaded because running scripts is disabled on this system`, simply run the PowerShell as Administrator and enter the following: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted`
-        4. Try again to start the software by double-clicking the shortcut on the desktop.
-
-- **Q**: The software is not responding, what can I do?
-    - **A**: Often, the best solution is to close all running instances of the software and hardware. This means pressing the power button on the ViperBox to shut it down and closing the software. If the software is stuck, you can got to Windows Task Manager and find a process called 'Python' and end it. Then, restart the software and the ViperBox.
-    - Note: if you are running some other Python software, you won't be able to discern between the two. Don't stop a process if this can cause problems.
-- **Q**: What do the colors of the LED's on the ViperBox mean?
-    - **A**: The LED's on the ViperBox have the following meanings:
-        - ViperBox power button side
-            - Green: the ViperBox is connected to the computer
-            - Red: the ViperBox is not connected to the software or there is an error
-            - Blue: the ViperBox is recording
-        - ViperBox SerDes side
-            - White: headstage connected or emulation active
-            - off: otherwise
-
-
 ## :robot: Using the API
 
 The API can be used to communicate with the ViperBox. It can be used to connect to the ViperBox, upload recording and stimulation settings and start and stop recordings and stimulations.
 The API can be manually controlled from the web interface by clicking the dropdown next to the function, then clicking "Try it out" and then clicking the blue "Execute" button.
 The typical workflow to do a recording and stimulation is to run the following commands:
 - `/connect`: to connect to the ViperBox
-
-![Overview of all the settings for one ViperBox](./imgs/connect.gif)
 
 - `/upload_recording_settings`: to upload the recording settings. Default [XML settings](#xml-scripts) are selected by default.
   - To edit the settings, open an editor and copy the default settings from the defaults folder into it. Adjust them and copy and paste everything into the ViperBox API. See below.
@@ -168,14 +144,6 @@ The typical workflow to do a recording and stimulation is to run the following c
 - `/stop_recording`: to stop the recording. The recording will be saved in the Recordings folder. The settings that you used to record will be saved in the Settings folder under the same name but as XML file.
 
 During a recording, new stimulation settings can be uploaded and a new stimulation can be started.
-
-> [!WARNING]
-> **Before version 0.0.4**, there is a problem with the driver that is necessary to connect to the ViperBox. An incompatible driver is installed automatically overnight. Every time you start the ViperBoxInterface, you need to reinstall the driver. This can be done by following these steps:
-
-> 1.	Connect ViperBox to PC and power on
-> 2.	Navigate to setup/DowngradeFTDI, and run the downgrade.bat batch file
-> 3.	Power cycle ViperBox
-> 4.	Optionally: verify driver version in Device Manager
 
 ## :hammer_and_wrench: Overview of ViperBox settings
 
@@ -272,6 +240,29 @@ The possible parameters for the stimulation units are:
 | `discharge`  | Time in microseconds after the last pulse                | μs      | 100-25500 | 100       | 200     |
 | `duration`   | Duration of the entire train                             | μs      | 100-25500 | 100       | 600     |
 | `aftertrain` | Time in microseconds after the entire train has finished | μs      | 100-25500 | 100       | 1000    |
+
+## :question: (F)AQ
+
+- **Q**: The shortcut is not working, what can I do?
+    - **A**: This is probably due to the fact that PowerShell doesn't have rights as to execute the startup script, in particular, the `conda` command. There is a whole StackOverflow thread about this [here](https://stackoverflow.com/questions/64149680/how-can-i-activate-a-conda-environment-from-powershell). Probably the following might help:
+
+        1. Open PowerShell and browse to `condabin` folder in your Conda installation directory, for example: `C:\Users\<username>\anaconda3\condabin`
+        2. Run `./conda init powershell` in that folder, and reopen the PowerShell.
+        3. Please note: If you encountered `ps1 cannot be loaded because running scripts is disabled on this system`, simply run the PowerShell as Administrator and enter the following: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted`
+        4. Try again to start the software by double-clicking the shortcut on the desktop.
+
+- **Q**: The software is not responding, what can I do?
+    - **A**: Often, the best solution is to close all running instances of the software and hardware. This means pressing the power button on the ViperBox to shut it down and closing the software. If the software is stuck, you can got to Windows Task Manager and find a process called 'Python' and end it. Then, restart the software and the ViperBox.
+    - Note: if you are running some other Python software, you won't be able to discern between the two. Don't stop a process if this can cause problems. If this doesn't work, restart the computer.
+- **Q**: What do the colors of the LED's on the ViperBox mean?
+    - **A**: The LED's on the ViperBox have the following meanings:
+        - ViperBox power button side
+            - Green: the ViperBox is connected to the computer
+            - Red: the ViperBox is not connected to the software or there is an error
+            - Blue: the ViperBox is recording
+        - ViperBox SerDes side
+            - White: headstage connected or emulation active
+            - off: otherwise
 
 <!-- ## XML control scripts
 XML scripts can have full or partial control over the ViperBox. They can be used for:
