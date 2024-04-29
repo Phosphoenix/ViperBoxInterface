@@ -372,7 +372,7 @@ async def select_permanent_discharge(oss: str):
     """Send stimulation current over these OS's."""
     logger.info(f"/select_permanent_discharge called with {oss}")
     if oss == "all":
-        VB.set_permanent_discharge([int(item + 1) for item in range(128)])
+        VB.set_permanent_discharge([int(item + 1) for item in range(60)])
     elif oss == "none":
         VB.set_permanent_discharge([])
     elif "-" in oss:

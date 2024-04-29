@@ -88,7 +88,7 @@ class ViperBox:
             self.NUM_CHANNELS = 64
 
         # Debugging functionality to switch permanent discharge on on these channels
-        self.permanent_discharge_list = []
+        self.permanent_discharge_list: list = []
 
         return None
 
@@ -1386,8 +1386,8 @@ class _DataSenderThread(threading.Thread):
                 self.logger.info(
                     "Windows might be busy with other tasks, stop and restart recording."
                 )
-                time.sleep(0.2)
-                counter += 8
+                time.sleep(0.3)
+                counter += 12
                 continue
 
             databuffer = np.asarray(
