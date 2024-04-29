@@ -1,7 +1,8 @@
 # 🔌 API documentation
 
 ```{toctree}
-viperboxinterface.ViperBox
-viperboxinterface.main
-viperboxinterface.VB_classes
+viperboxinterface.control
+viperboxinterface.gui
+viperboxinterface.server
+viperboxinterface.data_classes
 ```

@@ -15,7 +15,7 @@ gold_ui.py
 start_phx.bat
 
 docs/build/
-docs/source/_static/
+# docs/source/_static/
 docs/source/_templates/
 Recordings/
 Settings/

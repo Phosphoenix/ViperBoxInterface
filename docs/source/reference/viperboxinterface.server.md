@@ -1,7 +1,7 @@
-## viperboxinterface.main module
+## viperboxinterface.server module
 
 ```{eval-rst}
-.. automodule:: viperboxinterface.main
+.. automodule:: viperboxinterface.server
     :members:
     :undoc-members:
     :show-inheritance:
