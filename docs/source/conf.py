@@ -52,8 +52,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
-    # "myst_parser",
-    # "sphinx_autodoc_typehints",
+    "myst_parser",
+    "sphinx_autodoc_typehints",
 ]
 
 
@@ -180,7 +180,6 @@ def fix_anchors_with_named_emojis(input_file: Path, output_file: Path) -> None:
         "hammer_and_wrench",
         "warning",
         "question",
-        "brain",
     ]
     with input_file.open("r") as infile:
         content = infile.read()
