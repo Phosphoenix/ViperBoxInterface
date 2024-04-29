@@ -404,19 +404,19 @@ def write_index_file(docs_path: Path, toctree_entries: list[str]) -> None:
     # Constructing the content using textwrap.dedent for better readability
     content = textwrap.dedent(
         """
-            ```{{include}} introduction.md
-            ```
+        ```{{include}} introduction.md
+        ```
 
-            ```{{toctree}}
-            :hidden: true
-            :maxdepth: 2
-            :glob:
+        ```{{toctree}}
+        :hidden: true
+        :maxdepth: 2
+        :glob:
 
-            introduction
-            {pages}
-            reference/index
-            ```
-        """,
+        introduction
+        {pages}
+        reference/index
+        ```
+    """,
     ).format(pages=pages)
 
     # Write the content to the file
