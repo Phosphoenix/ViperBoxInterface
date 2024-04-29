@@ -129,10 +129,9 @@ Note that in the resulting recording in Open Ephys, the 'Duplicate' channels wil
 ## :robot: Using the API
 
 The API can be used to communicate with the ViperBox. It can be used to connect to the ViperBox, upload recording and stimulation settings and start and stop recordings and stimulations.
-The API can be manually controlled from the web interface by clicking the dropdown next to the function, then clicking "Try it out" and then clicking the blue "Execute" button.
+The API can be manually controlled from the [web interface](http://127.0.0.1:8000/docs) by clicking the dropdown next to the function, then clicking "Try it out" and then clicking the blue "Execute" button.
 The typical workflow to do a recording and stimulation is to run the following commands:
 - `/connect`: to connect to the ViperBox
-
 - `/upload_recording_settings`: to upload the recording settings. Default [XML settings](#xml-scripts) are selected by default.
   - To edit the settings, open an editor and copy the default settings from the defaults folder into it. Adjust them and copy and paste everything into the ViperBox API. See below.
 

@@ -158,7 +158,7 @@ def replace_image_links(input_file: Path, output_file: Path) -> None:
     new_content = (
         content.replace(
             "(./imgs/",
-            "(https://github.com/sbalk/ViperBoxInterface/blob/main/imgs/",
+            "(https://raw.githubusercontent.com/sbalk/ViperBoxInterface/main/imgs/",
         )
         .replace(".png)", ".png?raw=true)")
         .replace(".gif)", ".gif?raw=true)")
