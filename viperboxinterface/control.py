@@ -1010,12 +1010,16 @@ upload your custom settings and then try again.""",
 
     def _time(self) -> float:
         """Returns the current time in seconds.
-        If start_time_program is given, it will be subtracted from the current time.
+        If _rec_start_time exists, it will be subtracted from the current time.
 
-        TODO: year 2262 this will wrap.
+        Year 2262 this will wrap.
         """
         if self._rec_start_time:
-            return time.time_ns() / 1e9 - self._rec_start_time
+            effective_time = time.time_ns() / 1e9 - self._rec_start_time
+            if effective_time < 1e8:
+                return effective_time
+            else:
+                return -0.5
         else:
             return time.time_ns() / 1e9
 
@@ -1042,6 +1046,8 @@ upload your custom settings and then try again.""",
         try:
             requests.get("http://localhost:37497/api/status", timeout=0.1)
         except Exception:
+            # TODO: change to shortcut in
+            # C:\ProgramData\Microsoft\Windows\Start Menu\Programs
             os.startfile(r"C:\Program Files\Open Ephys\open-ephys.exe")
 
     def _os2chip_mat(self):
@@ -1085,16 +1091,6 @@ upload your custom settings and then try again.""",
         # self._convert_recording()
 
         return True, "Recording stopped"
-
-    def _convert_recording(
-        self,
-    ) -> None:
-        """Converts the raw recording into a numpy format."""
-        # TODO: not implemented
-
-    def _add_to_zarr(self, databuffer: np.ndarray) -> None:
-        """Adds the data to the zarr file."""
-        # TODO: not implemented
 
     def _SU_list_to_bitmask(self, SU_list: list[int]) -> int:
         # convert SUs to NVP format
@@ -1230,6 +1226,34 @@ for SU's {SU_dict}"
 
     def _er(self, error):
         return "".join(traceback.TracebackException.from_exception(error).format())
+
+
+#     def _run_xml_script(self, xml_string: str) -> tuple[bool, str]:
+#         pass
+
+#     def run_script(self, script: str) -> tuple[bool, str]:
+#         """Runs XML script on the ViperBox."""
+#         if self.tracking.box_connected is False:
+#             return False, "Not connected to ViperBox"
+
+#         if self.tracking.recording is True:
+#             return (
+#                 False,
+#                 """Recording in progress, cannot run script. First stop recording \
+# to run a script""",
+#             )
+
+#         return True, "Script ran successfully"
+
+#     def _convert_recording(
+#         self,
+#     ) -> None:
+#         """Converts the raw recording into a numpy format."""
+#         # TODO: not implemented
+
+#     def _add_to_zarr(self, databuffer: np.ndarray) -> None:
+#         """Adds the data to the zarr file."""
+#         # TODO: not implemented
 
 
 class _DataSenderThread(threading.Thread):
