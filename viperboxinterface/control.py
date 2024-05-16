@@ -1092,35 +1092,6 @@ upload your custom settings and then try again.""",
         """Converts the raw recording into a numpy format."""
         # TODO: not implemented
 
-        # convert_recording_read_handle = NVP.streamOpenFile(
-        #     str(self._rec_path), self._probe
-        # )
-
-        # mtx = self._os2chip_mat()
-        # while True:
-        #     # TODO: implement skipping of packages by checking:
-        #     # time = 0
-        #     # NAND
-        #     # session id is wrong
-
-        #     packets = NVP.streamReadData(
-        #         conver_recording_read_handle,
-        #         self.BUFFER_SIZE
-        #         )
-        #     count = len(packets)
-
-        #     if count < self.BUFFER_SIZE:
-        #         self.logger.warning("Out of packets")
-        #         break
-
-        #     # TODO: Rearrange data depening on selected gain
-        #     databuffer = np.asarray(
-        #         [packets[i].data for i in range(self.BUFFER_SIZE)], dtype="uint16"
-        #     )
-        #     databuffer = (databuffer @ mtx).T
-        #     databuffer = np.multiply(databuffer, self._settings.gain_vec[:, None])
-        #     self._add_to_zarr(databuffer)
-
     def _add_to_zarr(self, databuffer: np.ndarray) -> None:
         """Adds the data to the zarr file."""
         # TODO: not implemented
@@ -1209,32 +1180,6 @@ settings first""",
                     self.logger.debug(
                         f"On electrodes: {probe_info.stim_unit_os[int(SU)-1]}"
                     )
-
-        #                 except ValueError as e:
-        #                     return_statement = "SU settings not available on probe "
-        #                     f"{probe}, on box {box} are not available:
-        # {self._er(e)}"
-        #                     return False, return_statement
-        #         except ValueError as e:
-        #             return_statement
-        #             return (
-        #                 False,
-        #                 f"""Probe {probe} on box {box} doesn't seem to be
-        #                 connected:
-        # {self._er(e)}""",
-        #             )
-        # except ValueError as e:
-        #     return False, f"Box {box} doesn't seem to be connected:
-        # {self._er(e)}"
-
-        # # Convert SU list into bitmask
-        # SU_dict = {
-        #     int(box): {
-        #         int(probe): self._SU_list_to_bitmask(sulist)
-        #         for probe, sulist in probes.items()
-        #     }
-        #     for box, probes in SU_dict.items()
-        # }
 
         start_dt_times: Any = {}
 
@@ -1546,28 +1491,3 @@ class _DataSenderThread(threading.Thread):
     # TODO: handle stimulation mappings (SU->input->mzipa->probe) and
     # recording (probe->MZIPA->OS->chan)
     # TODO: implement gain_vec in vb classes for usage in recording settings
-
-
-# class oe_socket:
-#     """
-#     create a tcpServer object of type AF_INET and SOCK_STREAM
-#     bind to localhost at port 9001
-#     set timeout to none
-#     """
-#     def __init__(self):
-#         self.tcpServer = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
-#         self.tcpServer.bind(("localhost", 9001))
-#         self.tcpServer.listen(1)
-#         self.tcpServer.settimeout(None)
-
-#         self.logger.info("Waiting for external connection to start...")
-#         (tcpClient, address) = self.tcpServer.accept()
-#         self.logger.info("Connected.")
-#         self.address = address
-#         self.tcpClient = tcpClient
-
-
-# if __name__ == "__main__":
-#     VB = ViperBox(start_oe=False, _session_datetime="20210812_123456")
-#     VB.connect()
-#     # VB.shutdown()
