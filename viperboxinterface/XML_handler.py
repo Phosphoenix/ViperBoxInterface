@@ -359,7 +359,7 @@ def check_xml_boxprobes_exist_and_verify_data_with_settings(
 #     return True, "XML is valid."
 
 
-def create_empty_xml(path: Path):
+def create_empty_xml(path: Path, fname: str):
     """Create an empty xml file with the root element Recording and a child element
         Settings
 
@@ -375,6 +375,7 @@ def create_empty_xml(path: Path):
     - first line is not a settings line
     """
     program = etree.Element("Recording")
+    program.attrib["file_name"] = fname
     _ = etree.SubElement(program, "Settings")
     xml_bytes = etree.tostring(
         program,
@@ -396,7 +397,7 @@ def add_to_stimrec(
     delta_time: float,
 ):
     """Add setting or instruction to the stimrec xml file.
-    Converst from 0-indexing to 1-indexing.
+    Converts from 0-indexing to 1-indexing.
 
     Arguments:
     ---------
@@ -511,6 +512,23 @@ def add_to_stimrec(
     with open(path, "wb") as xml_file:
         xml_file.write(xml_bytes)
     return program
+
+
+def check_script_validity(path: Path):
+    """Check if the script is valid by checking if the first line is a settings line.
+
+    Arguments:
+    ---------
+    - path: path to the xml file
+
+    Test cases:
+    - path is not a string
+    - first line is not a settings line
+    """
+
+    # Check if path is valid path
+    # script = etree.parse(path)
+    pass
 
 
 # Testing code:
