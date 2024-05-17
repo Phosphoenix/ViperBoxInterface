@@ -526,9 +526,112 @@ def check_script_validity(path: Path):
     - first line is not a settings line
     """
 
-    # Check if path is valid path
-    # script = etree.parse(path)
-    pass
+    attrib_set_dict = {
+        "Recording": {"file_name"},
+        "Settings": {},
+        "RecordingSettings": {"mapping_file"},
+        "Instructions": {},
+        "StimulationWaveformSettings": {},
+        "StimulationMappingSettings": {},
+        "Channel": {"channel", "input", "references", "gain", "probe", "box"},
+        "RecordStart": {"start_time"},
+        "RecordStop": {"start_time"},
+        "Configuration": {
+            "start_time",
+            "box",
+            "probe",
+            "stimunit",
+            "polarity",
+            "pulses",
+            "prephase",
+            "amplitude1",
+            "width1",
+            "interphase",
+            "amplitude2",
+            "width2",
+            "discharge",
+            "duration",
+            "aftertrain",
+        },
+        "Mapping": {"start_time", "box", "probe", "stimunit", "electrodes"},
+        "Stimulate": {"start_time", "box", "probe", "SU_bitmask", "instruction_type"},
+    }
+
+    try:
+        script = etree.parse(path)
+    except etree.XMLSyntaxError as e:
+        return (
+            False,
+            f"Error in XML file, sometimes before the line mentioned in the error message: {e}.",
+        )
+    root = script.getroot()
+
+    # Check initial element requirements
+    if root.tag not in ["Recording", "Script"]:
+        return (
+            False,
+            f"Top element should be called 'Script' or 'Recording', see line {root.sourceline}.",
+        )
+    if root[0].tag != "Settings":
+        return (
+            False,
+            f"First child of Recording should be called 'Settings', see line {root[0].sourceline}.",
+        )
+    if root[0][0].tag != "RecordingSettings":
+        return (
+            False,
+            f"First grandchild of Recording should be called 'RecordingSettings', see line {root[0][0].sourceline}.",
+        )
+    if root[0][0][0].tag != "Channel":
+        return (
+            False,
+            f"First great-grandchild of Recording should be called 'Channel', see line {root[0][0].sourceline}.",
+        )
+    for element in root[0][0]:
+        attribs = set(dict(element.attrib).keys())
+        if element.tag != "Channel":
+            return (
+                False,
+                f"RecordingSettings should only contain Channel elements, see line {element.sourceline}.",
+            )
+        if attrib_set_dict["Channel"].issubset(attribs) is False:
+            return (
+                False,
+                f"Channel element is missing attribute(s): {','.join(attrib_set_dict['Channel']-attribs)}. See line {element.sourceline}.",
+            )
+        if len(attribs) != len(set(attribs)):
+            return (
+                False,
+                f"Channel element has duplicate attribute(s). See line {element.sourceline}.",
+            )
+
+    # Check if first level children are either Settings or Instructions
+    for child in root:
+        if child.tag not in ["Settings", "Instructions"]:
+            return (
+                False,
+                f"First level children should be either Settings or Instructions, see line {element.sourceline}.",
+            )
+
+    # Check if time stamps are increasing or equal
+    start_time_list = root.xpath(".//*[@start_time]")
+    last_time_stamp = -10.0
+    for item in start_time_list:
+        time_stamp = float(item.attrib["start_time"])
+        if time_stamp < last_time_stamp:
+            return False, "start_time should be increasing or equal"
+        last_time_stamp = time_stamp
+
+    # Check if all elements have minimum required attributes
+    for element in root.iter():
+        attribs = element.attrib
+        if attrib_set_dict[element.tag] == {}:
+            continue
+        if attrib_set_dict[element.tag].issubset(attribs) is False:
+            return (
+                False,
+                f"{element.tag} element is missing attribute(s): {','.join(attrib_set_dict[element.tag]-set(attribs.keys()))}. See line {element.sourceline}.",
+            )
 
 
 # Testing code:

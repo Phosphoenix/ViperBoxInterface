@@ -743,7 +743,7 @@ reverted to previous settings. Error: {self._er(e)}",
         XML_data: Any,
         check_topic: str = "all",
     ) -> tuple[bool, str]:
-        """API Verifies the XML string."""
+        """API Verifies the XML string or dictionary."""
         tmp_data = copy.deepcopy(self.local_settings)
 
         if XML_dictionary != {}:
@@ -768,9 +768,6 @@ reverted to previous settings. Error: {self._er(e)}",
                 self.connected,
                 "all",
             )
-            # result, feedback = check_xml_with_settings(
-            #     XML_data, tmp_data, check_topic, self.boxless
-            # )
         else:
             return False, "No XML data found"
 
@@ -988,19 +985,19 @@ upload your custom settings and then try again.""",
                             .channel[channel]
                             .__dict__,
                         },
-                        -0.1,
-                        -0.1,
+                        0.01,
+                        0.01,
                     )
 
         # Not necessary because will be written at stimulation start
         # # Try to write stimulation settings to stimrec if they are available.
-        # self._stimrec_write_stimulation_settings(self.local_settings, -0.1, -0.1)
+        # self._stimrec_write_stimulation_settings(self.local_settings, 0.01, 0.01)
         self.logger.debug("Write recording start to stimrec")
         add_to_stimrec(
             self.stim_file_path,
             "Instructions",
-            "Instruction",
-            {"filename": self.recording_name, "instruction_type": "recording_start"},
+            "RecordStart",
+            {"filename": self.recording_name},
             0.0,
             dt_rec_start,
         )
@@ -1088,8 +1085,8 @@ upload your custom settings and then try again.""",
         add_to_stimrec(
             self.stim_file_path,
             "Instructions",
-            "Instruction",
-            {"filename": self.recording_name, "instruction_type": "recording_stop"},
+            "RecordStop",
+            {"filename": self.recording_name},
             start_time,
             dt_time,
         )
@@ -1218,10 +1215,9 @@ settings first""",
                 add_to_stimrec(
                     self.stim_file_path,
                     "Instructions",
-                    "Instruction",
+                    "Stimulate",
                     {
                         "filename": self.recording_name,
-                        "instruction_type": "stimulation_start",
                         "box": box,
                         "probe": probe,
                         "SU_bitmask": SU_dict[box][probe],
