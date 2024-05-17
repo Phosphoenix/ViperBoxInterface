@@ -952,7 +952,17 @@ upload your custom settings and then try again.""",
         )
 
         # Create stimulation record
-        create_empty_xml(self.stim_file_path)
+        create_empty_xml(self.stim_file_path, stimrec_name)
+        requests.put(
+            "http://localhost:37497/api/recording",
+            json={
+                "parent_directory": str(self._rec_path.parent),
+                "append_text": "",
+                "base_text": str(self._rec_path.stem),
+                "prepend_text": "",
+                "default_record_engine": "OPENEPHYS",
+            },
+        )
 
         self.logger.info(
             f"Writing recording settings to stimrec file: {self.uploaded_settings}",
@@ -978,13 +988,13 @@ upload your custom settings and then try again.""",
                             .channel[channel]
                             .__dict__,
                         },
-                        -1.0,
-                        -1.0,
+                        -0.1,
+                        -0.1,
                     )
 
         # Not necessary because will be written at stimulation start
         # # Try to write stimulation settings to stimrec if they are available.
-        # self._stimrec_write_stimulation_settings(self.local_settings, -1.0, -1.0)
+        # self._stimrec_write_stimulation_settings(self.local_settings, -0.1, -0.1)
         self.logger.debug("Write recording start to stimrec")
         add_to_stimrec(
             self.stim_file_path,
@@ -1019,7 +1029,7 @@ upload your custom settings and then try again.""",
             if effective_time < 1e8:
                 return effective_time
             else:
-                return -0.5
+                return -0.01
         else:
             return time.time_ns() / 1e9
 
