@@ -4,19 +4,19 @@ import copy
 import logging
 import logging.handlers
 import os
-import socket
 import threading
 import time
 import traceback
 from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree as ET
 
 import numpy as np
 import requests
 from lxml import etree
-from scipy import signal
 from XML_handler import (
     add_to_stimrec,
+    check_script_validity,
     check_xml_boxprobes_exist_and_verify_data_with_settings,
     create_empty_xml,
     update_settings_with_XML,
@@ -34,6 +34,7 @@ from viperboxinterface.data_classes import (
     StatusTracking,
     parse_numbers,
 )
+from viperboxinterface.data_thread import _DataSenderThread
 from viperboxinterface.mappings import Mappings
 
 # TODO: implement rotation of logs to not hog up memory
@@ -178,7 +179,7 @@ class ViperBox:
         TODO: !!!!! all existing data is removed because the local settings are reset.
         The solution is to mention this in the docs and GUI.
         """
-        self._time()
+        # self._time()
         self.boxless = boxless
         self.emulation = emulation
         self.logger.info(
@@ -275,7 +276,7 @@ boxless: {boxless}.",
         try:
             NVP.openProbes(self._box_ptrs[box])
         except Exception as e:
-            self.logger.warning(f"!! openProbes() exception error: {self._er(e)}")
+            self.logger.warning(f"!! NVP.openProbes() exception error: {self._er(e)}")
             self.disconnect()
             return False, "Please connect asic to ViperBox and try again."
         self.logger.info(f"Probes opened: {self._box_ptrs[box]}")
@@ -291,11 +292,10 @@ boxless: {boxless}.",
                 self.connected.boxes[0].probes[probe] = True
             except Exception as error:
                 self.logger.warning(
-                    f"!! Init() exception error, probe {probe}: {self._er(error)}",
+                    f"!! NVP.init() exception error, probe {probe}: {self._er(error)}",
                 )
         self.logger.info(f"API channel opened: {devices[0]}")
         self._deviceId = devices[0].ID
-        # print(self.local_settings)
 
         self.uploaded_settings = copy.deepcopy(self.local_settings)
 
@@ -343,26 +343,13 @@ Please restart the ViperBox and the software and try again.",
 
     def shutdown(self) -> tuple[bool, str]:
         self.disconnect()
-        # if not self.headless:
-        # try:
-        #     _ = requests.put(
-        #         "http://localhost:37497/api/status",
-        #         json={"mode": "ACQUIRE"},
-        #         timeout=2,
-        #     )
-        # except Exception as e:
-        #     pass
-        # try:
-        #     _ = requests.put(
-        #         "http://localhost:37497/api/window",
-        #         json={"command": "quit"},
-        #         timeout=5,
-        #     )
-        # except Exception as e:
-        #     pass
         return True, "ViperBox shutdown"
 
-    def _upload_recording_settings(self, updated_tmp_settings):
+    def _upload_recording_settings(
+        self,
+        updated_tmp_settings,
+        mapping_file="defaults/electrode_mapping_short_cables.xlsx",
+    ):
         if self.boxless is True:
             self.logger.info(
                 "No box connected, skipping uploading recording settings \
@@ -372,7 +359,7 @@ to ViperBox",
 
         # TODO multibox this should be added to general settings and loaded if the
         # instructions do not come from XML but from probably the GUI.
-        self.mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
+        self.mapping = Mappings(mapping_file)
 
         for box in updated_tmp_settings.boxes.keys():
             for probe in updated_tmp_settings.boxes[box].probes.keys():
@@ -403,9 +390,9 @@ to ViperBox",
                         .channel[channel]
                         .get_refs,
                     )
-                    self.logger.debug(
-                        f"reference set: {updated_tmp_settings.boxes[box].probes[probe].channel[channel].get_refs}"
-                    )
+                    # self.logger.debug(
+                    #     f"reference set: {updated_tmp_settings.boxes[box].probes[probe].channel[channel].get_refs}"
+                    # )
                     NVP.setGain(
                         self._box_ptrs[box],
                         probe,
@@ -423,7 +410,7 @@ to ViperBox",
                     )  # see email Patrick 08/01/2024
 
                 self.logger.debug(
-                    f"Writing Channel config: \
+                    f"Writing Channel config to box: \
 {updated_tmp_settings.boxes[box].probes[probe]}",
                 )
                 if not self.emulation:
@@ -576,33 +563,32 @@ reverted to previous settings. Error: {self._er(e)}",
         self.uploaded_settings = copy.deepcopy(self.local_settings)
         return True, "Recording settings loaded"
 
-    def _stimrec_write_recording_settings(self, settings_to_write, start_time, dt_time):
-        self.logger.info(
-            f"Writing recording settings to stimrec file: {settings_to_write}",
-        )
-
-        # for box in updated_tmp_settings.boxes.keys():
-        #     for probe in updated_tmp_settings.boxes[box].probes.keys():
-        #         if self.stim_file_path is not None:
-        #             for channel in (
-        #                 self.uploaded_settings.boxes[box].probes[probe].channel.keys()
-        #             ):
-        #                 add_to_stimrec(
-        #                     self.stim_file_path,
-        #                     "Settings",
-        #                     "Channel",
-        #                     {
-        #                         "box": box,
-        #                         "probe": probe,
-        #                         "channel": channel,
-        #                         **self.uploaded_settings.boxes[box]
-        #                         .probes[probe]
-        #                         .channel[channel]
-        #                         .__dict__,
-        #                     },
-        #                     start_time,
-        #                     dt_time,
-        #                 )
+    # def _stimrec_write_recording_settings(self, settings_to_write, start_time, dt_time):
+    #     self.logger.info(
+    #         f"Writing recording settings to stimrec file: {settings_to_write}",
+    #     )
+    #     for box in updated_tmp_settings.boxes.keys():
+    #         for probe in updated_tmp_settings.boxes[box].probes.keys():
+    #             if self.stim_file_path is not None:
+    #                 for channel in (
+    #                     self.uploaded_settings.boxes[box].probes[probe].channel.keys()
+    #                 ):
+    #                     add_to_stimrec(
+    #                         self.stim_file_path,
+    #                         "Settings",
+    #                         "Channel",
+    #                         {
+    #                             "box": box,
+    #                             "probe": probe,
+    #                             "channel": channel,
+    #                             **self.uploaded_settings.boxes[box]
+    #                             .probes[probe]
+    #                             .channel[channel]
+    #                             .__dict__,
+    #                         },
+    #                         start_time,
+    #                         dt_time,
+    #                     )
 
     def _stimrec_write_stimulation_settings(
         self,
@@ -889,9 +875,7 @@ reverted to previous settings. Error: {self._er(e)}",
                     ):
                         return (
                             False,
-                            f"""No recording settings available for all channels on box\
- {box}, probe {probe}. First upload default settings for all channels, then \
-upload your custom settings and then try again.""",
+                            f"""No recording settings available for all channels on box {box}, probe {probe}. First upload default settings for all channels, then upload your custom settings and then try again.""",
                         )
 
         self._recording_datetime = time.strftime("%Y%m%d_%H%M%S")
@@ -950,20 +934,6 @@ upload your custom settings and then try again.""",
 
         # Create stimulation record
         create_empty_xml(self.stim_file_path, stimrec_name)
-        requests.put(
-            "http://localhost:37497/api/recording",
-            json={
-                "parent_directory": str(self._rec_path.parent),
-                "append_text": "",
-                "base_text": str(self._rec_path.stem),
-                "prepend_text": "",
-                "default_record_engine": "OPENEPHYS",
-            },
-        )
-
-        self.logger.info(
-            f"Writing recording settings to stimrec file: {self.uploaded_settings}",
-        )
 
         self.logger.debug("Write recording settings to stimrec")
         # Write recording settings to stimrec
@@ -1013,6 +983,22 @@ upload your custom settings and then try again.""",
         self.data_thread.start(self._rec_path, probe, empty=False)
 
         self.logger.info(f"Recording started: {recording_name}")
+
+        r = requests.put(
+            "http://localhost:37497/api/recording",
+            json={
+                "parent_directory": str(self._rec_path.parent),
+                "append_text": "",
+                "base_text": str(self._rec_path.stem),
+                "prepend_text": "",
+                "default_record_engine": "OPENEPHYS",
+            },
+            timeout=0.1,
+        )
+        self.logger.info(
+            f"Renaming of recording file name and directory: {r.status_code}"
+        )
+
         return True, f"Recording started: {recording_name}"
 
     def _time(self) -> float:
@@ -1234,6 +1220,152 @@ for SU's {SU_dict}"
     def _er(self, error):
         return "".join(traceback.TracebackException.from_exception(error).format())
 
+    def run_script(self, script_path: str) -> tuple[bool, str]:
+        "Run script from XML file"
+
+        # check if already recording
+        if self.tracking.recording is True:
+            return (
+                False,
+                "Recording in progress, cannot run script. First stop recording to run a script",
+            )
+
+        # re-init settings
+        self.logger.info("Re-initializing settings")
+        self.local_settings = GeneralSettings()
+        self.local_settings.boxes[0] = BoxSettings()
+        self.connected = ConnectedBoxes()
+        self.connected.boxes[0] = ConnectedProbes()
+        self.uploaded_settings = GeneralSettings()
+        self.tracking = StatusTracking()
+        self.tracking.box_connected = True
+        self.mapping = Mappings("defaults/electrode_mapping_short_cables.xlsx")
+
+        # re-init probes
+        self.logger.info("Re-initializing probes")
+        probe_list_int = [0]
+        box = 0
+        for probe in probe_list_int:
+            try:
+                NVP.init(self._box_ptrs[box], int(probe))  # Initialize all probes
+                self.logger.info(f"Probe {probe} initialized: {self._box_ptrs[box]}")
+                self.local_settings.boxes[0].probes[probe] = ProbeSettings()
+                self.connected.boxes[0].probes[probe] = True
+            except Exception as error:
+                self.logger.warning(
+                    f"!! NVP.init() exception error, probe {probe}: {self._er(error)}",
+                )
+
+        self.uploaded_settings = copy.deepcopy(self.local_settings)
+
+        # Check script validity
+        self.logger.info("Checking script validity")
+        return_value, return_message = check_script_validity(script_path)
+        if not return_value:
+            return return_value, return_message
+
+        # Run script
+        self.logger.info("Parse XML file")
+        try:
+            script = etree.parse(script_path)
+        except etree.XMLSyntaxError as e:
+            return (
+                False,
+                f"Error in XML file, sometimes before the line mentioned in the error message: {e}.",
+            )
+        root = script.getroot()
+        file_name = root.attrib["file_name"]
+
+        initial_time = -2.0
+        # print(f"time: {time.time()}")
+        self.logger.info("Start script")
+        for element in root:
+            # print("1 level:", element.tag)
+            if element.tag == "Settings":
+                for child in element:
+                    # print("2 level: ", child.tag)
+                    # if child.tag == "RecordingSettings": TODO this might need to be added
+                    #     mapping_file = child.attrib["mapping_file"]
+                    for grandchild in child:
+                        start_time = grandchild.attrib["start_time"]
+                        begin = f"<Program><Settings><{child.tag}>"
+                        end = f"</{child.tag}></Settings></Program>"
+                        middle = ET.tostring(grandchild).decode("utf-8")
+                        middle = middle[:-3]
+                        xml_string = begin + middle + end
+                        while time.time() < initial_time + float(start_time):
+                            time.sleep(0.01)
+                        if grandchild.tag == "Channel":
+                            # print(f"3 level: {grandchild.tag}: Channel")
+                            self.logger.info(
+                                f"Uploading recording settings with XML string: {xml_string}"
+                            )
+                            return_value, return_message = self.recording_settings(
+                                xml_string
+                            )
+                            if not return_value:
+                                self.logger.warning(return_message)
+                        elif grandchild.tag in ["Configuration", "Mapping"]:
+                            # print(f"3 level: {grandchild.tag}: Configuration or Mapping")
+                            self.logger.info(
+                                f"Uploading stimulation settings with XML string: {xml_string}"
+                            )
+                            return_value, return_message = self.stimulation_settings(
+                                xml_string
+                            )
+                            if not return_value:
+                                self.logger.warning(return_message)
+            elif element.tag == "Instructions":
+                for child in element:
+                    # print("2 level: ", child.tag)
+                    if (
+                        child.tag == "Instruction"
+                        and child.attrib["instruction_type"] == "recording_start"
+                    ):
+                        start_time = child.attrib["start_time"]
+                        initial_time = time.time()
+                        while time.time() < initial_time + float(start_time):
+                            time.sleep(0.01)
+                        # print(f"3 level: {child.attrib}: Start recording")
+                        self.logger.warning(
+                            f"Start recording with file name: {file_name}"
+                        )
+                        return_value, return_message = self.start_recording(file_name)
+                        if not return_value:
+                            self.logger.warning(return_message)
+                    elif (
+                        child.tag == "Instruction"
+                        and child.attrib["instruction_type"] == "stimulation_start"
+                    ):
+                        start_time = child.attrib["start_time"]
+                        while time.time() < initial_time + float(start_time):
+                            time.sleep(0.01)
+                        # print(f"3 level: {child.tag}: Stimulate")
+                        self.logger.info(
+                            f"Start stimulation on stimunit: {child.attrib['stimunit']}"
+                        )
+                        return_value, return_message = self.start_stimulation(
+                            boxes=child.attrib["box"],
+                            probes=child.attrib["probe"],
+                            SU_input=child.attrib["stimunit"],
+                        )
+                        if not return_value:
+                            self.logger.warning(return_message)
+                    elif (
+                        child.tag == "Instruction"
+                        and child.attrib["instruction_type"] == "recording_stop"
+                    ):
+                        start_time = child.attrib["start_time"]
+                        while time.time() < initial_time + float(start_time):
+                            time.sleep(0.01)
+                        # print(f"3 level: {child.tag}: Stop recording")
+                        self.logger.info("Stop recording, end of script.")
+                        return_value, return_message = self.stop_recording()
+                        if not return_value:
+                            self.logger.warning(return_message)
+
+        return True, "Script ran successfully"
+
 
 #     def _run_xml_script(self, xml_string: str) -> tuple[bool, str]:
 #         pass
@@ -1263,262 +1395,103 @@ for SU's {SU_dict}"
 #         # TODO: not implemented
 
 
-class _DataSenderThread(threading.Thread):
-    def __init__(
-        self,
-        NUM_SAMPLES: int,
-        FREQ: int,
-        NUM_CHANNELS: int,
-        mtx: np.ndarray,
-        use_mapping: bool = True,
-        port=9001,
-    ):
-        super().__init__()
-        self.thread = None
-        self.stop_stream = None
-        self.use_mapping = use_mapping
+# def TTL_start(
+#     self, probe: str, TTL_channel: str, SU_input: str
+# ) -> Tuple[bool, str]:
+#     """Starts TTL on the specified channel."""
+#     if TTL_channel not in [1, 2]:
+#         return False, "TTL channel should be 1 or 2"
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        socketHandler = logging.handlers.SocketHandler(
-            "localhost",
-            logging.handlers.DEFAULT_TCP_LOGGING_PORT,
-        )
-        self.logger.addHandler(socketHandler)
+#     # Check SU_input format
+#     SU_list = parse_numbers(SU_input, [1, 2, 3, 4, 5, 6, 7, 8])
 
-        self.NUM_SAMPLES = NUM_SAMPLES
-        self.FREQ = FREQ
-        self.NUM_CHANNELS = NUM_CHANNELS
-        self.bufferInterval = self.NUM_SAMPLES / self.FREQ
-        self._prep_lfilter(f0=50.0, Q=30.0, FREQ=self.FREQ)
-        self._create_header(
-            NUM_CHANNELS=self.NUM_CHANNELS,
-            NUM_SAMPLES=self.NUM_SAMPLES,
-        )
+#     # convert SUs to NVP format
+#     SU_string = "".join(["1" if i in SU_list else "0" for i in range(1, 9)])
+#     SU_bit_mask = int(SU_string, 2)
 
-        self.mtx = mtx
-        self.tcpServer = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
-        self.tcpServer.bind(("localhost", port))
-        self.tcpServer.listen(1)
-        self.tcpServer.settimeout(None)
-        self.tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.logger.info("Waiting for external connection to start...")
-        (tcpClient, socket_address) = self.tcpServer.accept()
-        self.logger.info("Connected.")
-        self.tcpClient = tcpClient
-        self.socket_address = socket_address
+#     if self.tracking.box_connected is False:
+#         return False, "Not connected to ViperBox"
 
-    def _prep_lfilter(self, f0: float = 50.0, Q: float = 30.0, FREQ: int = 20000):
-        b, a = signal.iirnotch(f0, Q, FREQ)
-        z = np.zeros((self.NUM_CHANNELS, 2))
-        self.b, self.a, self.z = b, a, z
+#     if self.tracking.recording is True:
+#         return False, "Recording in progress, cannot start stimulation"
 
-    def _create_header(self, NUM_CHANNELS: int = 60, NUM_SAMPLES: int = 500):
-        # ---- DEFINE HEADER VALUES ---- #
-        offset = 0  # Offset of bytes in this packet; only used for buffers > ~64 kB
-        dataType = 2  # Enumeration value based on OpenCV.Mat data types
-        elementSize = 2  # Number of bytes per element. elementSize = 2 for U16
-        # Data types:   [ U8, S8, U16, S16, S32, F32, F64 ]
-        # Enum value:   [  0,  1,   2,   3,   4,   5,   6 ]
-        # Element Size: [  1,  1,   2,   2,   4,   4,   8 ]
-        bytesPerBuffer = NUM_CHANNELS * NUM_SAMPLES * elementSize
-        self.header = (
-            np.array([offset, bytesPerBuffer], dtype="i4").tobytes()
-            + np.array([dataType], dtype="i2").tobytes()
-            + np.array([elementSize, NUM_CHANNELS, NUM_SAMPLES], dtype="i4").tobytes()
-        )
+#     all_configured, not_configured = self._check_SUs_configured(SU_bit_mask)
+#     if not all_configured:
+#         return False, f"Can't trigger SUs {not_configured}"
 
-    def _time(self):
-        return time.time_ns() / (10**9)
+#     threading.Thread(
+#         target=self._start_TTL_tracker_thread,
+#         args=(probe, TTL_channel, SU_bit_mask),
+#     ).start()
+#     # self._start_TTL_tracker_thread(probe, TTL_channel, SU_bit_mask)
 
-    def _prepare_databuffer(self, databuffer: np.ndarray, z) -> tuple:
-        if self.use_mapping:
-            databuffer = (databuffer @ self.mtx).T
-        else:
-            databuffer = databuffer.T
-        databuffer, z = signal.lfilter(self.b, self.a, databuffer, axis=1, zi=z)
-        databuffer = databuffer.astype("uint16")
-        databuffer = databuffer.copy(order="C")
-        return databuffer.tobytes(), z
+#     self._add_stimulation_record(
+#         "TTL_start",
+#         self._time() - self._rec_start_time,
+#         0,
+#         f"TTL channel: {TTL_channel}",
+#     )
 
-    def send_data(self, rec_path, probe):
-        self.logger.info("Started sending data to Open Ephys")
-        # TODO: How to handle data streams from multiple probes? align on timestamp?
-        send_data_read_handle = NVP.streamOpenFile(str(rec_path), probe)
-        counter = 0
-        # create a bit of a buffer such that you won't run out of packets
-        # when updating stimulation settings.
-        time.sleep(0.2)
-        t0 = self._time()
-        while not self.stop_stream.is_set():
-            counter += 1
-            packets = NVP.streamReadData(send_data_read_handle, self.NUM_SAMPLES)
-            count = len(packets)
-            if count == 0:
-                self.logger.info("No packets read.")
-                break
-            if count < self.NUM_SAMPLES:
-                self.logger.info(f"Out of packets; {count} packets read.")
-                self.logger.info(
-                    "Windows might be busy with other tasks, stop and restart recording."
-                )
-                time.sleep(0.3)
-                counter += 12
-                continue
+#     return (
+#         True,
+#         f"""TTL tracking started on channel {TTL_channel} with SU's
+#         {SU_bit_mask} on probe {probe}""",
+#     )
 
-            databuffer = np.asarray(
-                [packets[i].data for i in range(self.NUM_SAMPLES)],
-                dtype="uint16",
-            )
-            databuffer, self.z = self._prepare_databuffer(databuffer, self.z)
-            self.tcpClient.sendto(self.header + databuffer, self.socket_address)
-            t2 = self._time()
-            while (t2 - t0) < counter * self.bufferInterval:
-                t2 = self._time()
-        NVP.streamClose(send_data_read_handle)
+# def _start_TTL_tracker_thread(
+#     self, probe: int, TTL_channel: int, SU_bit_mask: str
+# ) -> None:
+#     """Converts the raw recording into a numpy format."""
+#     # TODO: this can be reduced to one function that listens to both TTL channels
 
-    def _send_empty(self):
-        self.logger.info("Started sending empty data to Open Ephys")
-        counter = 0
-        t0 = self._time()
-        for i in range(10):
-            counter += 1
-            databuffer = np.zeros((self.NUM_CHANNELS, 500), dtype="uint16").tobytes()
-            self.tcpClient.sendto(self.header + databuffer, self.socket_address)
-            t2 = self._time()
-            while (t2 - t0) < counter * self.bufferInterval:
-                t2 = self._time()
+#     # note this should be probe specific, not self._probe, that needs to
+#     # be checked anyway
+#     TTL_read_handle = NVP.streamOpenFile(self._rec_path, probe)
 
-    def start(self, recording_path, probe, empty=False):
-        if self.thread is not None and self.thread.is_alive():
-            self.logger.info("Thread already running")
-            return
-        if empty:
-            self.stop_stream = threading.Event()
-            self.thread = threading.Thread(target=self._send_empty, daemon=True)
-            self.thread.start()
-        else:
-            self.stop_stream = threading.Event()
-            self.thread = threading.Thread(
-                target=self.send_data,
-                args=(recording_path, probe),
-                daemon=True,
-            )
-            self.thread.start()
+#     self._active_TTLs[TTL_channel] = True
 
-    def stop(self):
-        self.stop_stream.set()
-        self.thread.join()
+#     # mtx = self._os2chip_mat()
+#     while self._active_TTLs[TTL_channel] is True:
+#         # TODO: implement skipping of packages by checking:
+#         # time = 0
+#         # NAND
+#         # session id is wrong
 
-    def shutdown(self):
-        self.stop()
-        self.tcpServer.close()
-        self.tcpClient.close()
+#         packets = NVP.streamReadData(TTL_read_handle, self.BUFFER_SIZE)
+#         count = len(packets)
 
-    def is_connected(self):
-        try:
-            self.tcpClient.getpeername()
-            return True
-        except OSError:
-            return False
+#         if count < self.BUFFER_SIZE:
+#             self.logger.warning("Out of packets")
+#             break
 
-    # def TTL_start(
-    #     self, probe: str, TTL_channel: str, SU_input: str
-    # ) -> Tuple[bool, str]:
-    #     """Starts TTL on the specified channel."""
-    #     if TTL_channel not in [1, 2]:
-    #         return False, "TTL channel should be 1 or 2"
+#         # TODO: Rearrange data depending on selected gain
+#         databuffer = np.asarray(
+#             [
+#                 [
+#                     int(str(bin(packets[0].status))[3:-1][0]),
+#                     int(str(bin(packets[0].status))[3:-1][1]),
+#                 ]
+#                 for i in range(self.BUFFER_SIZE)
+#             ],
+#             dtype="uint16",
+#         )
+#         if databuffer[:, TTL_channel].any():
+#             ret_val, text = self.start_stimulation(probe, SU_bit_mask)
 
-    #     # Check SU_input format
-    #     SU_list = parse_numbers(SU_input, [1, 2, 3, 4, 5, 6, 7, 8])
+#         if ret_val is False:
+#             # tell the user that the stimulation was not started
+#             raise ThreadingError(ret_val, text)
 
-    #     # convert SUs to NVP format
-    #     SU_string = "".join(["1" if i in SU_list else "0" for i in range(1, 9)])
-    #     SU_bit_mask = int(SU_string, 2)
+# def TTL_stop(self, TTL_channel: int) -> Tuple[bool, str]:
+#     """Stops the TTL tracker thread."""
+#     if self._active_TTLs[TTL_channel] is False:
+#         return False, f"TTL {TTL_channel} not running."
 
-    #     if self.tracking.box_connected is False:
-    #         return False, "Not connected to ViperBox"
+#     self._active_TTLs[TTL_channel] = False
 
-    #     if self.tracking.recording is True:
-    #         return False, "Recording in progress, cannot start stimulation"
+#     return True, f"Tracking of TTL {TTL_channel} stopped."
 
-    #     all_configured, not_configured = self._check_SUs_configured(SU_bit_mask)
-    #     if not all_configured:
-    #         return False, f"Can't trigger SUs {not_configured}"
-
-    #     threading.Thread(
-    #         target=self._start_TTL_tracker_thread,
-    #         args=(probe, TTL_channel, SU_bit_mask),
-    #     ).start()
-    #     # self._start_TTL_tracker_thread(probe, TTL_channel, SU_bit_mask)
-
-    #     self._add_stimulation_record(
-    #         "TTL_start",
-    #         self._time() - self._rec_start_time,
-    #         0,
-    #         f"TTL channel: {TTL_channel}",
-    #     )
-
-    #     return (
-    #         True,
-    #         f"""TTL tracking started on channel {TTL_channel} with SU's
-    #         {SU_bit_mask} on probe {probe}""",
-    #     )
-
-    # def _start_TTL_tracker_thread(
-    #     self, probe: int, TTL_channel: int, SU_bit_mask: str
-    # ) -> None:
-    #     """Converts the raw recording into a numpy format."""
-    #     # TODO: this can be reduced to one function that listens to both TTL channels
-
-    #     # note this should be probe specific, not self._probe, that needs to
-    #     # be checked anyway
-    #     TTL_read_handle = NVP.streamOpenFile(self._rec_path, probe)
-
-    #     self._active_TTLs[TTL_channel] = True
-
-    #     # mtx = self._os2chip_mat()
-    #     while self._active_TTLs[TTL_channel] is True:
-    #         # TODO: implement skipping of packages by checking:
-    #         # time = 0
-    #         # NAND
-    #         # session id is wrong
-
-    #         packets = NVP.streamReadData(TTL_read_handle, self.BUFFER_SIZE)
-    #         count = len(packets)
-
-    #         if count < self.BUFFER_SIZE:
-    #             self.logger.warning("Out of packets")
-    #             break
-
-    #         # TODO: Rearrange data depending on selected gain
-    #         databuffer = np.asarray(
-    #             [
-    #                 [
-    #                     int(str(bin(packets[0].status))[3:-1][0]),
-    #                     int(str(bin(packets[0].status))[3:-1][1]),
-    #                 ]
-    #                 for i in range(self.BUFFER_SIZE)
-    #             ],
-    #             dtype="uint16",
-    #         )
-    #         if databuffer[:, TTL_channel].any():
-    #             ret_val, text = self.start_stimulation(probe, SU_bit_mask)
-
-    #         if ret_val is False:
-    #             # tell the user that the stimulation was not started
-    #             raise ThreadingError(ret_val, text)
-
-    # def TTL_stop(self, TTL_channel: int) -> Tuple[bool, str]:
-    #     """Stops the TTL tracker thread."""
-    #     if self._active_TTLs[TTL_channel] is False:
-    #         return False, f"TTL {TTL_channel} not running."
-
-    #     self._active_TTLs[TTL_channel] = False
-
-    #     return True, f"Tracking of TTL {TTL_channel} stopped."
-
-    # TODO: get session id from somewhere and store it as recording self parameter
-    # TODO: handle stimulation mappings (SU->input->mzipa->probe) and
-    # recording (probe->MZIPA->OS->chan)
-    # TODO: implement gain_vec in vb classes for usage in recording settings
+# TODO: get session id from somewhere and store it as recording self parameter
+# TODO: handle stimulation mappings (SU->input->mzipa->probe) and
+# recording (probe->MZIPA->OS->chan)
+# TODO: implement gain_vec in vb classes for usage in recording settings
