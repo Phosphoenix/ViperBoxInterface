@@ -64,10 +64,6 @@ class ChanSettings:
                 tmp_dct[k] = str(env[k])
         return cls(**tmp_dct)
 
-    @property
-    def hash(self):
-        return hash(f"{self.references}{self.gain}{self.input}")
-
 
 @dataclass
 class SUSettings:
