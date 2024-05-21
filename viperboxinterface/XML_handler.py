@@ -116,8 +116,6 @@ def get_required_boxes_probes_from_xml(data_xml, connected: ConnectedBoxes):
         "StimulationMappingSettings",
     ]
 
-    logger.debug(f"connected: {connected}")
-
     for XML_element in data_xml.iter():
         # goes through all XML_elements
         if XML_element.tag in tags:
@@ -528,14 +526,14 @@ def check_script_validity(path: Path):
 
     attrib_set_dict = {
         "Recording": {"file_name"},
+        "Program": {},
         "Settings": {},
         "RecordingSettings": {"mapping_file"},
         "Instructions": {},
         "StimulationWaveformSettings": {},
         "StimulationMappingSettings": {},
         "Channel": {"channel", "input", "references", "gain", "probe", "box"},
-        "RecordStart": {"start_time"},
-        "RecordStop": {"start_time"},
+        "Instruction": {"start_time", "instruction_type"},
         "Configuration": {
             "start_time",
             "box",
@@ -554,7 +552,6 @@ def check_script_validity(path: Path):
             "aftertrain",
         },
         "Mapping": {"start_time", "box", "probe", "stimunit", "electrodes"},
-        "Stimulate": {"start_time", "box", "probe", "SU_bitmask", "instruction_type"},
     }
 
     try:
@@ -567,7 +564,7 @@ def check_script_validity(path: Path):
     root = script.getroot()
 
     # Check initial element requirements
-    if root.tag not in ["Recording", "Script"]:
+    if root.tag not in ["Recording", "Program"]:
         return (
             False,
             f"Top element should be called 'Script' or 'Recording', see line {root.sourceline}.",
@@ -632,6 +629,16 @@ def check_script_validity(path: Path):
                 False,
                 f"{element.tag} element is missing attribute(s): {','.join(attrib_set_dict[element.tag]-set(attribs.keys()))}. See line {element.sourceline}.",
             )
+        if element.tag == "Instruction":
+            if element.attrib["instruction_type"] == "stimulation_start":
+                extra_set = {"box", "probe", "stimunit"}
+                if extra_set.issubset(attribs) is False:
+                    return (
+                        False,
+                        f"{element.tag} element is missing attribute(s): {','.join(extra_set-set(attribs.keys()))}. See line {element.sourceline}.",
+                    )
+
+    return True, "Script is valid."
 
 
 # Testing code:
