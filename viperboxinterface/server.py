@@ -333,6 +333,15 @@ async def start_stimulation(api_start_stim: apiStartStim):
     return {"result": result, "feedback": feedback}
 
 
+@app.post("/run_script")
+async def run_script(script_path: str):
+    """Run a script on the ViperBox."""
+    logger.info(f"/run_script called with {script_path}")
+    result, feedback = VB.run_script(script_path)
+    logger.info(f"/run_script returned with {result}; {feedback}")
+    return {"result": result, "feedback": feedback}
+
+
 # @app.post("/TTL_start/")#, tags=["TTL_start"])
 # async def TTL_start(api_TTL_start: apiTTLStart):
 #     result, feedback = VB.TTL_start(
