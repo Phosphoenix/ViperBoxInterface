@@ -375,6 +375,13 @@ def run_gui(use_mapping: bool = True) -> None:
         return "red"
 
     def get_references(reference_switch_matrix):
+        """Get the reference string from the reference switch matrix.
+
+        Args: reference_switch_matrix (list): List of strings, either "on" or "off".
+
+        Returns: ref_string (str): String of binary values of the reference switch matrix.
+        Such as "0,1,2,3,4" for the first reference being selected.
+        """
         bin_input_list = "".join(
             ["1" if item == "on" else "0" for item in reference_switch_matrix],
         )
@@ -982,7 +989,6 @@ press OK',
     url = "http://127.0.0.1:8000/"
     tmp_path = ""
     _, values = window.read(timeout=0)
-    # SetLED(window, "led_connect_probe", False)
     SetLED(window, "led_rec", False)
     fig = generate_plot()
     figure_agg = draw_figure(window["-CANVAS-"].TKCanvas, fig)
@@ -1011,10 +1017,8 @@ press OK',
         data = {"probe_list": "1", "emulation": "False", "boxless": "False"}
         response = requests.post(url + "connect", json=data)
         if handle_response(response, "Connected to ViperBox"):
-            # SetLED(window, "led_connect_probe", True)
             SetLED(window, "led_rec", False)
         else:
-            # SetLED(window, "led_connect_probe", False)
             SetLED(window, "led_rec", False)
         # Upload default settings
         try:
