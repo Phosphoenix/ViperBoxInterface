@@ -6,6 +6,8 @@ testing.ipynb
 *.log
 *.json
 
+test_*
+
 ~$*
 
 update_blocker
