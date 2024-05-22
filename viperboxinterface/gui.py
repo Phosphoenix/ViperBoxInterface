@@ -226,16 +226,16 @@ def run_gui(use_mapping: bool = True) -> None:
                     tooltip="Start recording before stimulating",
                 ),
             ],
-            [
-                sg.Column(
-                    [
-                        [
-                            sg.Text("Recording status:"),
-                            LEDIndicator("led_rec"),
-                        ],
-                    ],
-                ),
-            ],
+            # [
+            #     sg.Column(
+            #         [
+            #             [
+            #                 sg.Text("Recording status:"),
+            #                 LEDIndicator("led_rec"),
+            #             ],
+            #         ],
+            #     ),
+            # ],
         ],
         expand_x=True,
         element_justification="c",
@@ -583,7 +583,7 @@ press OK',
                 # "led_connect_BS",
                 # "led_connect_probe",
                 "input_filename",
-                "led_rec",
+                # "led_rec",
                 "checkbox_rec_wo_stim",
                 # "input_filter_name",
                 # "listbox_settings",
@@ -989,7 +989,7 @@ press OK',
     url = "http://127.0.0.1:8000/"
     tmp_path = ""
     _, values = window.read(timeout=0)
-    SetLED(window, "led_rec", False)
+    # SetLED(window, "led_rec", False)
     fig = generate_plot()
     figure_agg = draw_figure(window["-CANVAS-"].TKCanvas, fig)
 
@@ -1017,9 +1017,10 @@ press OK',
         data = {"probe_list": "1", "emulation": "False", "boxless": "False"}
         response = requests.post(url + "connect", json=data)
         if handle_response(response, "Connected to ViperBox"):
-            SetLED(window, "led_rec", False)
-        else:
-            SetLED(window, "led_rec", False)
+            pass
+            # SetLED(window, "led_rec", False)
+        # else:
+        # SetLED(window, "led_rec", False)
         # Upload default settings
         try:
             response = requests.post(url + "default_settings", timeout=5)
@@ -1081,9 +1082,10 @@ in Ephys Socket, in Open Ephys",
             data = {"probe_list": "1", "emulation": "False", "boxless": "False"}
             response = requests.post(url + "connect", json=data)
             if handle_response(response, "Connected to ViperBox"):
-                SetLED(window, "led_rec", False)
-            else:
-                SetLED(window, "led_rec", False)
+                pass
+            #     SetLED(window, "led_rec", False)
+            # else:
+            #     SetLED(window, "led_rec", False)
         elif event == "button_connect_oe":
             response = sg.popup_ok_cancel(
                 "After you press OK here, you have 10 seconds to press 'CONNECT' \
@@ -1116,13 +1118,13 @@ Please do the following: \n\
             if handle_response(response, "Recording started"):
                 window["button_rec"].update(disabled=True)
                 window["button_stim"].update(disabled=False)
-            SetLED(window, "led_rec", True)
+            # SetLED(window, "led_rec", True)
         elif event == "button_stop":
             logger.info("Stop recording button pressed")
             response = requests.post(url + "stop_recording")
             if handle_response(response, "Recording stopped"):
                 pass
-            SetLED(window, "led_rec", False)
+            # SetLED(window, "led_rec", False)
             window["button_rec"].update(disabled=False)
         elif event == "button_stim":
             logger.info("Stimulate button pressed")
