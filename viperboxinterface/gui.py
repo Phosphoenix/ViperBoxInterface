@@ -1114,6 +1114,7 @@ Please do the following: \n\
                 )
                 continue
             if handle_response(response, "Recording started"):
+                window["button_rec"].update(disabled=True)
                 window["button_stim"].update(disabled=False)
             SetLED(window, "led_rec", True)
         elif event == "button_stop":
@@ -1122,6 +1123,7 @@ Please do the following: \n\
             if handle_response(response, "Recording stopped"):
                 pass
             SetLED(window, "led_rec", False)
+            window["button_rec"].update(disabled=False)
         elif event == "button_stim":
             logger.info("Stimulate button pressed")
             data = {"boxes": "1", "probes": "-", "SU_input": "1"}

@@ -1279,13 +1279,10 @@ for SU's {SU_dict}"
         file_name = root.attrib["file_name"]
 
         initial_time = -2.0
-        # print(f"time: {time.time()}")
         self.logger.info("Start script")
         for element in root:
-            # print("1 level:", element.tag)
             if element.tag == "Settings":
                 for child in element:
-                    # print("2 level: ", child.tag)
                     # if child.tag == "RecordingSettings": TODO this might need to be added
                     #     mapping_file = child.attrib["mapping_file"]
                     for grandchild in child:
@@ -1298,7 +1295,6 @@ for SU's {SU_dict}"
                         while time.time() < initial_time + float(start_time):
                             time.sleep(0.01)
                         if grandchild.tag == "Channel":
-                            # print(f"3 level: {grandchild.tag}: Channel")
                             self.logger.info(
                                 f"Uploading recording settings with XML string: {xml_string}"
                             )
@@ -1308,7 +1304,6 @@ for SU's {SU_dict}"
                             if not return_value:
                                 self.logger.warning(return_message)
                         elif grandchild.tag in ["Configuration", "Mapping"]:
-                            # print(f"3 level: {grandchild.tag}: Configuration or Mapping")
                             self.logger.info(
                                 f"Uploading stimulation settings with XML string: {xml_string}"
                             )
@@ -1319,7 +1314,6 @@ for SU's {SU_dict}"
                                 self.logger.warning(return_message)
             elif element.tag == "Instructions":
                 for child in element:
-                    # print("2 level: ", child.tag)
                     if (
                         child.tag == "Instruction"
                         and child.attrib["instruction_type"] == "recording_start"
@@ -1328,7 +1322,6 @@ for SU's {SU_dict}"
                         initial_time = time.time()
                         while time.time() < initial_time + float(start_time):
                             time.sleep(0.01)
-                        # print(f"3 level: {child.attrib}: Start recording")
                         self.logger.warning(
                             f"Start recording with file name: {file_name}"
                         )
@@ -1342,7 +1335,6 @@ for SU's {SU_dict}"
                         start_time = child.attrib["start_time"]
                         while time.time() < initial_time + float(start_time):
                             time.sleep(0.01)
-                        # print(f"3 level: {child.tag}: Stimulate")
                         self.logger.info(
                             f"Start stimulation on stimunit: {child.attrib['stimunit']}"
                         )
@@ -1360,7 +1352,6 @@ for SU's {SU_dict}"
                         start_time = child.attrib["start_time"]
                         while time.time() < initial_time + float(start_time):
                             time.sleep(0.01)
-                        # print(f"3 level: {child.tag}: Stop recording")
                         self.logger.info("Stop recording, end of script.")
                         return_value, return_message = self.stop_recording()
                         if not return_value:
