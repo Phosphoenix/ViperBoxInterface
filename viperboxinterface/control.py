@@ -1223,6 +1223,8 @@ for SU's {SU_dict}"
     def run_script(self, script_path: str) -> tuple[bool, str]:
         "Run script from XML file"
 
+        self.logger.info("########## Initiating script")
+
         # check if already recording
         if self.tracking.recording is True:
             return (
@@ -1366,23 +1368,6 @@ for SU's {SU_dict}"
 
         return True, "Script ran successfully"
 
-
-#     def _run_xml_script(self, xml_string: str) -> tuple[bool, str]:
-#         pass
-
-#     def run_script(self, script: str) -> tuple[bool, str]:
-#         """Runs XML script on the ViperBox."""
-#         if self.tracking.box_connected is False:
-#             return False, "Not connected to ViperBox"
-
-#         if self.tracking.recording is True:
-#             return (
-#                 False,
-#                 """Recording in progress, cannot run script. First stop recording \
-# to run a script""",
-#             )
-
-#         return True, "Script ran successfully"
 
 #     def _convert_recording(
 #         self,

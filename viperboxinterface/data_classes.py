@@ -392,12 +392,12 @@ def parse_references(refstr: str) -> str:
 
     Arguments:
     ---------
-    - refstr {str} -- string of numbers to parse
-    - all_values {list[int]} -- list of all possible values for the numbers
+    - refstr {str} -- string of numbers to parse like "b,1-3".
+    - all_values {list[int]} -- list of all possible values for the numbers being [0,1,2,3,4,5,6,7,8] in the case of references
 
     Returns:
     -------
-    - result {numpy.ndarray} -- numpy array of parsed integers in sequential order
+    - result {numpy.ndarray} -- numpy array of parsed integers in sequential order like "111100000".
 
     Test cases:
     - wrong ranges: '1-2-3', '1-', '1,,2', '1--2', '-1'

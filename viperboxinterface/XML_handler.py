@@ -425,11 +425,18 @@ def add_to_stimrec(
     plus_one_list = ["box", "probe", "channel", "stimunit"]
     for key in plus_one_list:
         if key in settings_dict.keys():
-            settings_dict[key] = settings_dict[key] + 1
+            settings_dict[key] = int(settings_dict[key]) + 1
     if "electrodes" in settings_dict.keys():
         settings_dict["electrodes"] = ", ".join(
             map(str, np.asarray(settings_dict["electrodes"]) + 1),
         )
+    if "references" in settings_dict.keys():
+        # this should take an input like "101000000" and convert it to "b, 2"
+        relist = settings_dict["references"].replace("b", "0")
+        relist = [
+            str(i) for i, bit in enumerate(settings_dict["references"]) if bit == "1"
+        ]
+        settings_dict["references"] = ", ".join(relist)
 
     settings_dict = {str(key): str(value) for key, value in settings_dict.items()}
     settings_dict = {
