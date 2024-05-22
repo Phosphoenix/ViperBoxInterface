@@ -20,7 +20,7 @@ dependencies = [
     "lxml",
     "matplotlib",
     "numpy",
-    "PySimpleGUI",
+    "PySimpleGUI = 4.60.5",
     "requests",
     "scipy",
     "pandas",
