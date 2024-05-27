@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import logging.handlers
+import threading
 import time
 from pathlib import Path
 
@@ -30,8 +31,6 @@ def run_gui(use_mapping: bool = True) -> None:
     )
     logger.addHandler(socketHandler)
 
-    # batch_script_path = os.getcwd() + "\\setup\\update.bat"
-
     gui_start_vals = {
         "anodic_cathodic": ("Anodic", "polarity"),
         "number_of_pulses": (20, "pulses"),
@@ -45,17 +44,6 @@ def run_gui(use_mapping: bool = True) -> None:
         "pulse_duration": (600, "duration"),
         "discharge_time_extra": (1000, "aftertrain"),
     }
-
-    def collapse(layout, key):
-        return sg.pin(
-            sg.Column(
-                layout,
-                key=key,
-                visible=manual_stim,
-                element_justification="r",
-                expand_x=True,
-            ),
-        )
 
     def LEDIndicator(key=None, radius=15):
         return sg.Graph(
@@ -82,7 +70,6 @@ def run_gui(use_mapping: bool = True) -> None:
     # CF STIMULATION PULSE FRAME
 
     def generate_plot(
-        # biphasic: int = 1,
         anodic_cathodic: int = 0,
         pulse_delay: int = 0,
         first_pulse_phase_width: int = 170,
@@ -91,13 +78,8 @@ def run_gui(use_mapping: bool = True) -> None:
         discharge_time: int = 200,
         pulse_amplitude_anode: int = 5,
         pulse_amplitude_cathode: int = 5,
-        # pulse_amplitude_equal: int = 0,
         pulse_duration: int = 600,
     ):
-        # if bool(pulse_amplitude_equal):
-        #     pulse_amplitude_cathode = pulse_amplitude_anode
-        # if not bool(biphasic):
-        #     pulse_amplitude_cathode = 0
         if anodic_cathodic == 1:
             pulse_amplitude_anode *= -1
             pulse_amplitude_cathode *= -1
@@ -156,26 +138,13 @@ def run_gui(use_mapping: bool = True) -> None:
     # ------------------------------------------------------------------
     # CF: VIPERBOX CONTROL FRAME
 
-    viperbox_control_frame = sg.Column(
-        # "Viperbox connection",
-        # [
+    viperbox_control_col = sg.Frame(
+        "Connection",
         [
             [sg.VPush()],
             [
                 sg.Push(),
                 sg.Column(
-                    # [
-                    #     [
-                    #         sg.Text("ViperBox connected"),  # , size=(10, 0)),
-                    #         LEDIndicator("led_connect_probe"),
-                    #     ],
-                    #     [
-                    #         sg.Button("Connect", key="button_connect", disabled=True),
-                    #         sg.Button(
-                    #             "Disconnect", key="button_disconnect", disabled=True
-                    #         ),
-                    #     ],
-                    # ],
                     [
                         [
                             sg.Button(
@@ -201,13 +170,16 @@ def run_gui(use_mapping: bool = True) -> None:
         ],
         # ],
         expand_y=True,
+        expand_x=True,
+        element_justification="c",
     )
 
-    viperbox_recording_settings_frame = sg.Column(
-        # "ViperBox control",
+    viperbox_recording_settings_col = sg.Frame(
+        "Manual recording",
         [
+            [sg.VPush()],
             [
-                sg.Text("Subject"),
+                sg.Text("Recording file name"),
                 sg.Input("Recording", key="input_filename", size=(15, 1)),
                 sg.Button(
                     "Change folder",
@@ -226,6 +198,7 @@ def run_gui(use_mapping: bool = True) -> None:
                     tooltip="Start recording before stimulating",
                 ),
             ],
+            [sg.VPush()],
             # [
             #     sg.Column(
             #         [
@@ -237,14 +210,74 @@ def run_gui(use_mapping: bool = True) -> None:
             #     ),
             # ],
         ],
+        expand_y=True,
         expand_x=True,
         element_justification="c",
     )
 
-    sg.Frame(
-        "Open ephys data viewer",
-        [[sg.Button("Start Open Ephys", key="button_start_oe")]],
+    script_col = sg.Frame(
+        "Script execution",
+        [
+            [
+                sg.Button(
+                    "Select script",
+                    key="button_select_script",
+                    size=(15, 1),
+                ),
+            ],
+            [
+                sg.Text(
+                    "No script selected",
+                    key="input_script",
+                    size=(15, 1),
+                ),
+            ],
+            [
+                sg.Button(
+                    "Run script",
+                    key="button_run_script",
+                    size=(15, 1),
+                    disabled=True,
+                ),
+            ],
+        ],
+        expand_y=True,
         expand_x=True,
+        element_justification="c",
+    )
+
+    upload_rec_button = sg.Button(
+        "Recording settings",
+        key="upload_recording_settings",
+        disabled=True,
+        size=(15, 1),
+    )
+
+    upload_stim_button = sg.Button(
+        "Stimulation settings",
+        key="upload_stimulation_settings",
+        disabled=True,
+        size=(15, 1),
+    )
+
+    upload_defaults_button = sg.Button(
+        "Default settings",
+        key="upload_defaults",
+        disabled=True,
+        size=(15, 1),
+    )
+
+    upload_settings_col = sg.Frame(
+        "Upload settings",
+        [
+            # [sg.Text("Upload settings to ViperBox")],
+            [upload_rec_button],
+            [upload_stim_button],
+            [upload_defaults_button],
+        ],
+        expand_y=True,
+        expand_x=True,
+        element_justification="c",
     )
 
     # ------------------------------------------------------------------
@@ -285,7 +318,6 @@ def run_gui(use_mapping: bool = True) -> None:
         "x60": 0,
         "x24": 1,
         "x12": 2,
-        # "x0.16": 3,
     }
     gain_button_matrix = [
         [
@@ -314,24 +346,6 @@ def run_gui(use_mapping: bool = True) -> None:
         vertical_alignment="bottom",
     )
 
-    upload_rec_button = sg.Button(
-        "Recording settings",
-        key="upload_recording_settings",
-        disabled=True,
-    )
-
-    upload_stim_button = sg.Button(
-        "Stimulation settings",
-        key="upload_stimulation_settings",
-        disabled=True,
-    )
-
-    upload_defaults_button = sg.Button(
-        "Default settings",
-        key="upload_defaults",
-        disabled=True,
-    )
-
     recording_settings_frame = sg.Frame(
         "Recording settings",
         [
@@ -340,17 +354,6 @@ def run_gui(use_mapping: bool = True) -> None:
         ],
         expand_x=True,
         # expand_y=True,
-    )
-
-    upload_settings_frame = sg.Column(
-        # "Upload settings to ViperBox",
-        [
-            [sg.Text("Upload settings to ViperBox")],
-            [upload_rec_button, upload_stim_button],
-            [upload_defaults_button],
-        ],
-        expand_x=True,
-        element_justification="c",
     )
 
     def toggle_1d_color(event, reference_switch_matrix):
@@ -613,7 +616,6 @@ press OK',
     # ------------------------------------------------------------------
     # CF: PULSE SHAPE FRAME
 
-    manual_stim = True
     pulse_shape_col_settings = sg.Column(
         [
             # [
@@ -890,11 +892,13 @@ press OK',
         "ViperBox control",
         [
             [
-                viperbox_control_frame,
-                sg.VSeparator(),
-                viperbox_recording_settings_frame,
-                sg.VSeparator(),
-                upload_settings_frame,
+                viperbox_control_col,
+                # sg.VSeparator(),
+                viperbox_recording_settings_col,
+                # sg.VSeparator(),
+                script_col,
+                # sg.VSeparator(),
+                upload_settings_col,
             ],
         ],
         expand_y=True,
@@ -975,6 +979,9 @@ press OK',
             values["anodic_cathodic"] = 1
         return values
 
+    def run_script(data):
+        requests.post(url + "run_script", json=data)
+
     logger.debug("Starting GUI")
 
     gain = 0
@@ -1014,7 +1021,7 @@ press OK',
     # Initialize viperbox with default settings
     if __name__ != "__main__":
         # Connect to ViperBox
-        data = {"probe_list": "1", "emulation": "False", "boxless": "False"}
+        data = {"probe_list": "1", "emulation": "False", "boxless": "True"}
         response = requests.post(url + "connect", json=data)
         if handle_response(response, "Connected to ViperBox"):
             pass
@@ -1039,7 +1046,6 @@ in Ephys Socket, in Open Ephys",
                 pass
 
     disabled_startup_buttons = [
-        # "button_disconnect",
         "button_connect",
         "button_connect_oe",
         "button_rec",
@@ -1095,6 +1101,33 @@ in Ephys Socket, in Open Ephys",
                 response = requests.post(url + "connect_oe_reset", timeout=10)
                 if handle_response(response, "Connected to Open Ephys"):
                     pass
+        elif event == "button_select_script":
+            script_path = sg.popup_get_file(
+                "Select script",
+                file_types=(("XML files", "*.xml"),),
+            )
+            if script_path:
+                window["input_script"].update(Path(script_path).name)
+                window["button_run_script"].update(disabled=False)
+        elif event == "button_run_script":  # and not window_script:
+            print(type(script_path))
+            print(len(script_path))
+            script_thread = threading.Thread(
+                target=run_script,
+                args=(script_path,),
+                daemon=True,
+            )
+            script_thread.start()
+            abort = sg.popup_cancel(
+                "Script running, press Cancel to abort, otherwise wait."
+            )
+            if abort == "Cancel":
+                requests.post(url + "abort_script")
+            script_thread.join()
+            logger.info("Script thread started")
+        elif event == "button_abort_script":
+            requests.post(url + "abort_script")
+            logger.info("Script abort api call sent")
         elif event == "button_select_recording_folder":
             tmp_path = sg.popup_get_folder("Select recording folder")
             logger.info(f"Updated recordings file path to: {tmp_path}")
