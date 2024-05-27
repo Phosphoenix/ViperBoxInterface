@@ -1021,7 +1021,7 @@ press OK',
     # Initialize viperbox with default settings
     if __name__ != "__main__":
         # Connect to ViperBox
-        data = {"probe_list": "1", "emulation": "False", "boxless": "True"}
+        data = {"probe_list": "1", "emulation": "False", "boxless": "False"}
         response = requests.post(url + "connect", json=data)
         if handle_response(response, "Connected to ViperBox"):
             pass
