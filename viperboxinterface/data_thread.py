@@ -105,9 +105,6 @@ class _DataSenderThread(threading.Thread):
                 break
             if count < self.NUM_SAMPLES:
                 self.logger.info(f"Out of packets; {count} packets read.")
-                self.logger.info(
-                    "If you didn't stop acquisition, Windows might be busy with other tasks. Stop and restart recording."
-                )
                 time.sleep(0.3)
                 counter += 12
                 continue

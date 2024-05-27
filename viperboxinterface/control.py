@@ -1220,6 +1220,14 @@ for SU's {SU_dict}"
     def _er(self, error):
         return "".join(traceback.TracebackException.from_exception(error).format())
 
+    def _wait_script(self, start_time: float, initial_time: float):
+        while time.time() - float(initial_time) < float(start_time):
+            if os.path.exists(".abort_script"):
+                os.remove(".abort_script")
+                return False
+            time.sleep(0.01)
+        return True
+
     def run_script(self, script_path: str) -> tuple[bool, str]:
         "Run script from XML file"
 
@@ -1277,9 +1285,9 @@ for SU's {SU_dict}"
             )
         root = script.getroot()
         file_name = root.attrib["file_name"]
-
-        initial_time = -2.0
         self.logger.info("Start script")
+        initiate_run = time.time()
+        aborted = False
         for element in root:
             if element.tag == "Settings":
                 for child in element:
@@ -1287,13 +1295,14 @@ for SU's {SU_dict}"
                     #     mapping_file = child.attrib["mapping_file"]
                     for grandchild in child:
                         start_time = grandchild.attrib["start_time"]
+                        if not self._wait_script(start_time, initiate_run):
+                            aborted = True
+                            break
                         begin = f"<Program><Settings><{child.tag}>"
                         end = f"</{child.tag}></Settings></Program>"
                         middle = ET.tostring(grandchild).decode("utf-8")
                         middle = middle[:-3]
                         xml_string = begin + middle + end
-                        while time.time() < initial_time + float(start_time):
-                            time.sleep(0.01)
                         if grandchild.tag == "Channel":
                             self.logger.info(
                                 f"Uploading recording settings with XML string: {xml_string}"
@@ -1319,9 +1328,9 @@ for SU's {SU_dict}"
                         and child.attrib["instruction_type"] == "recording_start"
                     ):
                         start_time = child.attrib["start_time"]
-                        initial_time = time.time()
-                        while time.time() < initial_time + float(start_time):
-                            time.sleep(0.01)
+                        if not self._wait_script(start_time, initiate_run):
+                            aborted = True
+                            break
                         self.logger.warning(
                             f"Start recording with file name: {file_name}"
                         )
@@ -1333,8 +1342,9 @@ for SU's {SU_dict}"
                         and child.attrib["instruction_type"] == "stimulation_start"
                     ):
                         start_time = child.attrib["start_time"]
-                        while time.time() < initial_time + float(start_time):
-                            time.sleep(0.01)
+                        if not self._wait_script(start_time, initiate_run):
+                            aborted = True
+                            break
                         self.logger.info(
                             f"Start stimulation on stimunit: {child.attrib['stimunit']}"
                         )
@@ -1350,12 +1360,19 @@ for SU's {SU_dict}"
                         and child.attrib["instruction_type"] == "recording_stop"
                     ):
                         start_time = child.attrib["start_time"]
-                        while time.time() < initial_time + float(start_time):
-                            time.sleep(0.01)
+                        if not self._wait_script(start_time, initiate_run):
+                            aborted = True
+                            break
                         self.logger.info("Stop recording, end of script.")
                         return_value, return_message = self.stop_recording()
                         if not return_value:
                             self.logger.warning(return_message)
+
+        if aborted:
+            if self.tracking.recording is True:
+                self.logger.warning("Aborting recording")
+                self.stop_recording()
+            return False, "Script aborted"
 
         return True, "Script ran successfully"
 

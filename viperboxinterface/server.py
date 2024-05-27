@@ -87,7 +87,7 @@ VB = ViperBox(
 )
 
 
-@app.post("/connect")  # , tags=["connect"]
+@app.post("/connect")
 async def init(connect: Connect):
     """Initializes the ViperBoxInterface.
 
@@ -133,7 +133,7 @@ async def connect_oe_reset():
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/disconnect")  # , tags=["disconnect"])
+@app.post("/disconnect")
 async def disconnect():
     """Disconnects from the ViperBox.
 
@@ -148,7 +148,7 @@ async def disconnect():
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/shutdown")  # , tags=["shutdown"])
+@app.post("/shutdown")
 async def shutdown():
     """Shuts down the ViperBoxInterface, apart from disconnect, it also tries to close
     Open Ephys.
@@ -164,7 +164,7 @@ async def shutdown():
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/verify_xml/")  # , tags=["verify_xml"])
+@app.post("/verify_xml/")
 async def verify_xml(api_verify_xml: apiVerifyXML):
     """Verify XML in string format (plain text). The settings that are in the uploaded
     XML are also checked with the existing settings. For example, if they contain
@@ -197,7 +197,7 @@ async def verify_xml(api_verify_xml: apiVerifyXML):
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/recording_settings/")  # , tags=["recording_settings"])
+@app.post("/recording_settings/")
 async def recording_settings(api_rec_settings: apiRecSettings):
     """Upload recording settings.
 
@@ -225,7 +225,7 @@ async def recording_settings(api_rec_settings: apiRecSettings):
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/stimulation_settings/")  # , tags=["stimulation_settings"])
+@app.post("/stimulation_settings/")
 async def stimulation_settings(api_stim_settings: apiStimSettings):
     """Upload stimulation settings.
 
@@ -268,7 +268,7 @@ async def default_settings():
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/start_recording")  # , tags=["start_recording"])
+@app.post("/start_recording")
 async def start_recording(api_start_rec: apiStartRec):
     """Starts recording with the specified recording name. Recording is saved in
     /Recordings. Also creates a record of all the actions and stimulations that have
@@ -289,7 +289,7 @@ async def start_recording(api_start_rec: apiStartRec):
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/stop_recording")  # , tags=["stop_recording"])
+@app.post("/stop_recording")
 async def stop_recording():
     """Stops the recording.
 
@@ -304,7 +304,7 @@ async def stop_recording():
     return {"result": result, "feedback": feedback}
 
 
-@app.post("/start_stimulation/")  # , tags=["start_stimulation"])
+@app.post("/start_stimulation/")
 async def start_stimulation(api_start_stim: apiStartStim):
     """Triggers the selected stimulation units.
 
@@ -337,25 +337,20 @@ async def start_stimulation(api_start_stim: apiStartStim):
 async def run_script(script_path: str):
     """Run a script on the ViperBox."""
     logger.info(f"/run_script called with {script_path}")
-    result, feedback = VB.run_script(script_path)
+    threading.Thread(target=VB.run_script, args=(script_path,), daemon=True).start()
+    result, feedback = True, "Script started"
     logger.info(f"/run_script returned with {result}; {feedback}")
     return {"result": result, "feedback": feedback}
 
 
-# @app.post("/TTL_start/")#, tags=["TTL_start"])
-# async def TTL_start(api_TTL_start: apiTTLStart):
-#     result, feedback = VB.TTL_start(
-#         api_TTL_start.TTL_channel,
-#         api_TTL_start.TTL_XML,
-#         api_TTL_start.SU_bit_mask,
-#     )
-#     return {"result": result, "feedback": feedback}
-
-
-# @app.post("/TTL_stop/")#, tags=["TTL_stop"])
-# async def TTL_stop(api_TTL_stop: apiTTLStop):
-#     result, feedback = VB.TTL_stop(apiTTLStop.TTL_channel)
-#     return {"result": result, "feedback": feedback}
+@app.post("/abort_script")
+async def abort_script():
+    """Abort the currently running script."""
+    logger.info("/abort_script called")
+    with open(os.path.join(os.path.dirname(__file__), ".abort_script"), "w") as _:
+        pass
+    logger.info("/Aborting script")
+    return {"result": True, "feedback": "Script aborted"}
 
 
 @app.get("/")
@@ -365,7 +360,6 @@ async def root():
 
 
 def self_terminate():
-    # time.sleep(2)
     parent = psutil.Process(psutil.Process(os.getpid()).ppid())
     parent.kill()
 
