@@ -234,9 +234,15 @@ def run_gui(use_mapping: bool = True) -> None:
             ],
             [
                 sg.Button(
-                    "Run script",
+                    "Run",
                     key="button_run_script",
-                    size=(15, 1),
+                    size=(6, 1),
+                    disabled=True,
+                ),
+                sg.Button(
+                    "Abort",
+                    key="button_abort_script",
+                    size=(6, 1),
                     disabled=True,
                 ),
             ],
@@ -980,7 +986,7 @@ press OK',
         return values
 
     def run_script(data):
-        requests.post(url + "run_script", json=data)
+        requests.post(url + "run_script", json={"script_path": data})
 
     logger.debug("Starting GUI")
 
@@ -1110,23 +1116,20 @@ in Ephys Socket, in Open Ephys",
                 window["input_script"].update(Path(script_path).name)
                 window["button_run_script"].update(disabled=False)
         elif event == "button_run_script":  # and not window_script:
-            print(type(script_path))
-            print(len(script_path))
             script_thread = threading.Thread(
                 target=run_script,
                 args=(script_path,),
                 daemon=True,
             )
-            script_thread.start()
-            abort = sg.popup_cancel(
-                "Script running, press Cancel to abort, otherwise wait."
-            )
-            if abort == "Cancel":
-                requests.post(url + "abort_script")
-            script_thread.join()
             logger.info("Script thread started")
+            script_thread.start()
+            [window[item].update(disabled=True) for item in disabled_startup_buttons]
+            window["button_abort_script"].update(disabled=False)
         elif event == "button_abort_script":
             requests.post(url + "abort_script")
+            script_thread.join()
+            [window[item].update(disabled=False) for item in disabled_startup_buttons]
+            window["button_abort_script"].update(disabled=True)
             logger.info("Script abort api call sent")
         elif event == "button_select_recording_folder":
             tmp_path = sg.popup_get_folder("Select recording folder")

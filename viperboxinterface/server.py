@@ -16,6 +16,7 @@ from viperboxinterface import gui, logger
 from viperboxinterface.api_classes import (
     Connect,
     apiRecSettings,
+    apiScriptPath,
     apiStartRec,
     apiStartStim,
     apiStimSettings,
@@ -334,10 +335,12 @@ async def start_stimulation(api_start_stim: apiStartStim):
 
 
 @app.post("/run_script")
-async def run_script(script_path: str):
+async def run_script(api_script_path: apiScriptPath):
     """Run a script on the ViperBox."""
-    logger.info(f"/run_script called with {script_path}")
-    threading.Thread(target=VB.run_script, args=(script_path,), daemon=True).start()
+    logger.info(f"/run_script called with {api_script_path.script_path}")
+    threading.Thread(
+        target=VB.run_script, args=(api_script_path.script_path,), daemon=True
+    ).start()
     result, feedback = True, "Script started"
     logger.info(f"/run_script returned with {result}; {feedback}")
     return {"result": result, "feedback": feedback}

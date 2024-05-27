@@ -206,3 +206,17 @@ class apiVerifyXML(BaseModel):
         if check_topic not in ["all", "recording", "stimulation"]:
             raise ValueError("check_topic must be 'all', 'recording' or 'stimulation'")
         return check_topic
+
+
+@dataclass
+class apiScriptPath(BaseModel):
+    script_path: str = ""
+
+    @field_validator("script_path")
+    @classmethod
+    def check_unicode(cls, script_path: str) -> str:
+        try:
+            script_path.encode("ascii")
+        except UnicodeEncodeError as e:
+            raise ValueError(f"script_path must be utf-8. Error: {e}") from e
+        return script_path
