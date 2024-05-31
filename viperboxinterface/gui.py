@@ -899,11 +899,8 @@ press OK',
         [
             [
                 viperbox_control_col,
-                # sg.VSeparator(),
                 viperbox_recording_settings_col,
-                # sg.VSeparator(),
                 script_col,
-                # sg.VSeparator(),
                 upload_settings_col,
             ],
         ],
