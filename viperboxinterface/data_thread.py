@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import socket
 import threading
 import time
@@ -9,7 +10,7 @@ from scipy import signal
 import viperboxinterface.NeuraviperPy as NVP
 
 
-class _DataSenderThread(threading.Thread):
+class _DataSenderThread(multiprocessing.Process):
     def __init__(
         self,
         NUM_SAMPLES: int,
@@ -94,7 +95,7 @@ class _DataSenderThread(threading.Thread):
         counter = 0
         # create a bit of a buffer such that you won't run out of packets
         # when updating stimulation settings.
-        time.sleep(0.2)
+        time.sleep(0.1)
         t0 = self._time()
         while not self.stop_stream.is_set():
             counter += 1
