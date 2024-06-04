@@ -223,6 +223,7 @@ def run_gui(use_mapping: bool = True) -> None:
                     "Select script",
                     key="button_select_script",
                     size=(15, 1),
+                    disabled=True,
                 ),
             ],
             [
@@ -1049,6 +1050,7 @@ in Ephys Socket, in Open Ephys",
                 pass
 
     disabled_startup_buttons = [
+        "button_select_script",
         "button_connect",
         "button_connect_oe",
         "button_rec",
