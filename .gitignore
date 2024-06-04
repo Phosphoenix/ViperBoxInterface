@@ -5,6 +5,7 @@ __pycache__/*
 testing.ipynb
 *.log
 *.json
+.abort_script
 
 test_*
 
