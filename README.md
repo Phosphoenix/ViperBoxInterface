@@ -264,7 +264,7 @@ The possible parameters for the stimulation units are discussed in the chapter [
         4. Try again to start the software by double-clicking the shortcut on the desktop.
 
 - **Q**: My recordings aren't saved, what can I do?
-    - **A**: If you want your recordings to be saved in the Open Ephys format, make sure that there is [Record Node](https://open-ephys.github.io/gui-docs/User-Manual/Plugins/Record-Node.html) present in the Signal chain in Open Ephys and that you have the correct file format installed. You can do the latter by opening Open Ephys and going to File > Plugin Installer > Open Ephys File Format > Install.
+    - **A**: If you want your recordings to be saved in the Open Ephys format, make sure that there is [Record Node](https://open-ephys.github.io/gui-docs/User-Manual/Plugins/Record-Node.html) present in the Signal chain in Open Ephys and that you have the correct file format installed. You can do the latter by opening Open Ephys and going to File > Plugin Installer > Open Ephys Data Format > Install.
 - **Q**: The software is not responding, what can I do?
     - **A**: Often, the best solution is to close all running instances of the software and hardware. This means pressing the power button on the ViperBox to shut it down and closing the software. If the software is stuck, you can got to Windows Task Manager and find a process called 'Python' and end it. Then, restart the software and the ViperBox.
     - Note: if you are running some other Python software, you won't be able to discern between the two. Don't stop a process if this can cause problems. If this doesn't work, restart the computer.
