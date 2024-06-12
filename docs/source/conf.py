@@ -39,7 +39,7 @@ sys.path.insert(1, str(docs_path))
 from viperboxinterface import __version__  # noqa: E402
 
 project = "ViperBoxInterface"
-copyright = "2024, Stijn Balk"  # noqa: A001
+copyright = "2024, Phosphoenix"  # noqa: A001
 author = "Stijn Balk"
 
 version = __version__
