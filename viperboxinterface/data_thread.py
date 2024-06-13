@@ -68,22 +68,34 @@ class _DataSenderThread(multiprocessing.Process):
         # Data types:   [ U8, S8, U16, S16, S32, F32, F64 ]
         # Enum value:   [  0,  1,   2,   3,   4,   5,   6 ]
         # Element Size: [  1,  1,   2,   2,   4,   4,   8 ]
-        bytesPerBuffer = NUM_CHANNELS * NUM_SAMPLES * elementSize
+        # Add two extra channels to NUM_CHANNELS for 2 TTL bits
+        bytesPerBuffer = (NUM_CHANNELS + 2) * NUM_SAMPLES * elementSize
+        # Add two extra channels to NUM_CHANNELS for 2 TTL bits
         self.header = (
             np.array([offset, bytesPerBuffer], dtype="i4").tobytes()
             + np.array([dataType], dtype="i2").tobytes()
-            + np.array([elementSize, NUM_CHANNELS, NUM_SAMPLES], dtype="i4").tobytes()
+            + np.array(
+                [elementSize, NUM_CHANNELS + 2, NUM_SAMPLES], dtype="i4"
+            ).tobytes()
         )
 
     def _time(self):
         return time.time_ns() / (10**9)
 
-    def _prepare_databuffer(self, databuffer: np.ndarray, z) -> tuple:
+    def _extract_bits(self, value):
+        # value AND 0b00000010, then shift right by 1
+        bit_1 = ((value & (1 << 1)) >> 1) * 65535
+        # value AND 0b00000100, then shift right by 2
+        bit_2 = ((value & (1 << 2)) >> 2) * 65536
+        return bit_1, bit_2
+
+    def _prepare_databuffer(self, databuffer: np.ndarray, z, bits) -> tuple:
         if self.use_mapping:
             databuffer = (databuffer @ self.mtx).T
         else:
             databuffer = databuffer.T
         databuffer, z = signal.lfilter(self.b, self.a, databuffer, axis=1, zi=z)
+        databuffer = np.concatenate((databuffer, bits.T), axis=0)
         databuffer = databuffer.astype("uint16")
         databuffer = databuffer.copy(order="C")
         return databuffer.tobytes(), z
@@ -91,11 +103,13 @@ class _DataSenderThread(multiprocessing.Process):
     def send_data(self, rec_path, probe):
         self.logger.info("Started sending data to Open Ephys")
         # TODO: How to handle data streams from multiple probes? align on timestamp?
+        self.logger.debug(f"Recording path: {rec_path}")
         send_data_read_handle = NVP.streamOpenFile(str(rec_path), probe)
         counter = 0
         # create a bit of a buffer such that you won't run out of packets
         # when updating stimulation settings.
-        time.sleep(0.1)
+        # time.sleep(1.5)
+        databuffer = np.zeros((self.NUM_CHANNELS + 2, 500), dtype="uint16")
         t0 = self._time()
         while not self.stop_stream.is_set():
             counter += 1
@@ -105,16 +119,38 @@ class _DataSenderThread(multiprocessing.Process):
                 self.logger.info("No packets read.")
                 break
             if count < self.NUM_SAMPLES:
-                self.logger.info(f"Out of packets; {count} packets read.")
-                time.sleep(0.3)
-                counter += 12
+                asdf = [packets[i].timestamp for i in range(500)]
+                subtracted = np.asarray([asdf[i + 1] - asdf[i] - 5 for i in range(499)])
+                self.logger.debug(
+                    f" max, min value in time difference{subtracted.max(), subtracted.min()}"
+                )
+                self.logger.debug(f"Time difference between packets: {subtracted}")
+                self.logger.info(
+                    f"Out of packets; {count} packets read. Sending empty data."
+                )
+                databuffer = np.tile(databuffer[-1, :], (500, 1)).T
+                self.tcpClient.sendto(self.header + databuffer, self.socket_address)
+                t2 = self._time()
+                while (t2 - t0) < counter * self.bufferInterval:
+                    t2 = self._time()
+                time.sleep(1)
+                counter += 40
                 continue
-
             databuffer = np.asarray(
                 [packets[i].data for i in range(self.NUM_SAMPLES)],
                 dtype="uint16",
             )
-            databuffer, self.z = self._prepare_databuffer(databuffer, self.z)
+            TTL_bits = np.asarray(
+                [
+                    self._extract_bits(packets[i].status)
+                    for i in range(self.NUM_SAMPLES)
+                ],
+                dtype="uint16",
+            )
+            if counter % 40 == 0:
+                TTL_bits = np.zeros((self.NUM_SAMPLES, 2), dtype="uint16")
+            databuffer, self.z = self._prepare_databuffer(databuffer, self.z, TTL_bits)
+            print(databuffer.shape)
             self.tcpClient.sendto(self.header + databuffer, self.socket_address)
             t2 = self._time()
             while (t2 - t0) < counter * self.bufferInterval:
@@ -125,9 +161,12 @@ class _DataSenderThread(multiprocessing.Process):
         self.logger.info("Started sending empty data to Open Ephys")
         counter = 0
         t0 = self._time()
-        for i in range(10):
+        for _ in range(10):
             counter += 1
-            databuffer = np.zeros((self.NUM_CHANNELS, 500), dtype="uint16").tobytes()
+            # Add two extra channels to NUM_CHANNELS for 2 TTL bits
+            databuffer = np.zeros(
+                (self.NUM_CHANNELS + 2, 500), dtype="uint16"
+            ).tobytes()
             self.tcpClient.sendto(self.header + databuffer, self.socket_address)
             t2 = self._time()
             while (t2 - t0) < counter * self.bufferInterval:
