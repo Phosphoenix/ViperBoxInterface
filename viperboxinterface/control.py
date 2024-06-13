@@ -495,7 +495,6 @@ settings to ViperBox",
         xml_string: str | None = None,
         reset: bool = False,
         default_values: bool = False,
-        read_mapping_xlsx: bool = False,
     ) -> tuple[bool, str]:
         """Loads the recording settings from an XML string or default file."""
         if self.boxless is True:
@@ -911,7 +910,7 @@ reverted to previous settings. Error: {self._er(e)}",
 
         self.logger.debug(self._box_ptrs)
         self.logger.debug("NVP.setFileStream")
-        box = 0
+        box = 0  # TODO boxfix: also loop over boxes
         NVP.setFileStream(self._box_ptrs[box], str(self._rec_path))
         self.logger.debug("NVP.enableFileStream")
         NVP.enableFileStream(self._box_ptrs[box], str(self._rec_path))
@@ -922,6 +921,7 @@ reverted to previous settings. Error: {self._er(e)}",
         self._rec_start_time = self._time()
         NVP.setSWTrigger(self._box_ptrs[box])
         dt_rec_start = self._time()
+        self.logger.debug("SW trigger fired")
 
         if self.recording_name:
             stimrec_name = self.recording_name
@@ -983,6 +983,11 @@ reverted to previous settings. Error: {self._er(e)}",
         probe = 0
         self.logger.debug("Start sending data")
         self.data_thread.start(self._rec_path, probe, empty=False)
+        # self.data_thread.start(
+        #     r"C:\Users\S\Documents\Projects\NeuraViPeR\NeuraViPeR_once_worked\NeuraViPeR\ViperBoxInterface\viperboxinterface\Recordings\asdf_20240531_150542.bin",
+        #     probe,
+        #     empty=False,
+        # )
 
         self.logger.info(f"Recording started: {recording_name}")
 
@@ -1375,6 +1380,7 @@ for SU's {SU_dict}"
                             self.logger.warning(return_message)
 
         if aborted:
+            os.remove(".abort_script")
             if self.tracking.recording is True:
                 self.logger.warning("Aborting recording")
                 self.stop_recording()
