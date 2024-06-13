@@ -48,6 +48,7 @@ class ViperBox:
     SKIP_SIZE = 20
     FREQ = 20000
     OS_WRITE_TIME = 1
+    OE_URL = "http://localhost:37497/api/status"
 
     def __init__(self, _session_datetime: str, start_oe=True, use_mapping=True) -> None:
         """Initialize the ViperBox class."""
@@ -108,14 +109,15 @@ class ViperBox:
         # Start OE
         self.logger.info("Checking if Open Ephys is running")
         try:
-            r = requests.get("http://localhost:37497/api/status", timeout=0.1)
+            r = requests.get(self.OE_URL, timeout=0.1)
             self.logger.info("Open Ephys is running")
         except Exception:
+            self.logger.info("Open Ephys not running, starting it")
             threading.Thread(target=self._start_oe, daemon=True).start()
             self.logger.info("Open Ephys not running, starting it")
             time.sleep(2)
             # Wait for OE finish starting
-            r = requests.get("http://localhost:37497/api/status", timeout=5)
+            r = requests.get(self.OE_URL, timeout=5)
 
         # Check if data thread exists
         if hasattr(self, "data_thread"):
@@ -130,7 +132,7 @@ class ViperBox:
             )
             self.data_thread.start("", 0, empty=True)
             r = requests.put(
-                "http://localhost:37497/api/status",
+                self.OE_URL,
                 json={"mode": "ACQUIRE"},
                 timeout=1,
             )
@@ -148,7 +150,7 @@ class ViperBox:
             )
             self.data_thread.start("", 0, empty=True)
             r = requests.put(
-                "http://localhost:37497/api/status",
+                self.OE_URL,
                 json={"mode": "ACQUIRE"},
                 timeout=1,
             )
@@ -157,11 +159,11 @@ class ViperBox:
                 "Both Open Ephys and data thread were running, data thread recreated",
             )
         else:
-            r = requests.get("http://localhost:37497/api/status", timeout=0.1)
+            r = requests.get(self.OE_URL, timeout=0.1)
             if r.json()["mode"] != "ACQUIRE":
                 self.data_thread.start("", 0, empty=True)
                 r = requests.put(
-                    "http://localhost:37497/api/status",
+                    self.OE_URL,
                     json={"mode": "ACQUIRE"},
                     timeout=1,
                 )
@@ -216,6 +218,7 @@ boxless: {boxless}.",
             )
 
         if self.start_oe:
+            self.logger.info("Starting Open Ephys in connection function")
             threading.Thread(target=self._start_oe, daemon=True).start()
 
         # Scan for devices
@@ -249,7 +252,6 @@ boxless: {boxless}.",
         box = 0
         tmp_handel = NVP.createHandle(devices[0].ID)
         self._box_ptrs[box] = tmp_handel
-        # self._box_ptrs[box] = NVP.createHandle(devices[0].ID)
         self.logger.info(f"Box handle created: {self._box_ptrs[box]}")
         NVP.openBS(self._box_ptrs[box])
         self.logger.info(f"BS opened: {self._box_ptrs[box]}")
@@ -995,6 +997,7 @@ reverted to previous settings. Error: {self._er(e)}",
             },
             timeout=0.1,
         )
+        r = requests.put(self.OE_URL, json={"mode": "RECORD"}, timeout=0.1)
         self.logger.info(
             f"Renaming of recording file name and directory: {r.status_code}"
         )
@@ -1037,7 +1040,7 @@ reverted to previous settings. Error: {self._er(e)}",
 
     def _start_oe(self):
         try:
-            requests.get("http://localhost:37497/api/status", timeout=0.1)
+            requests.get(self.OE_URL, timeout=0.1)
         except Exception:
             # TODO: change to shortcut in
             # C:\ProgramData\Microsoft\Windows\Start Menu\Programs
@@ -1062,6 +1065,7 @@ reverted to previous settings. Error: {self._er(e)}",
         self.logger.debug("Run NVP.arm to stop recording")
         NVP.arm(self._box_ptrs[box])
         # Close file
+        time.sleep(0.5)
         self.logger.debug("Run NVP.setFileStream to no name")
         NVP.setFileStream(self._box_ptrs[box], "")
         dt_time = self._time() - start_time
@@ -1079,6 +1083,8 @@ reverted to previous settings. Error: {self._er(e)}",
 
         self.tracking.recording = False
         self._rec_start_time = None
+
+        _ = requests.put(self.OE_URL, json={"mode": "ACQUIRE"}, timeout=0.1)
 
         # TODO: combine stim history and recording into some file format
         # self._convert_recording()
