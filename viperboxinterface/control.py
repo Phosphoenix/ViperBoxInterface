@@ -979,7 +979,6 @@ reverted to previous settings. Error: {self._er(e)}",
         # TODO fix probe number
         # probably add a que for all data streams and be able to let open ephys
         # switch between them
-        self.oe_socket = True
         probe = 0
         self.logger.debug("Start sending data")
         self.data_thread.start(self._rec_path, probe, empty=False)
@@ -1070,11 +1069,9 @@ reverted to previous settings. Error: {self._er(e)}",
         self.logger.debug("Run NVP.arm to stop recording")
         NVP.arm(self._box_ptrs[box])
         # Close file
-        time.sleep(0.5)
         self.logger.debug("Run NVP.setFileStream to no name")
         NVP.setFileStream(self._box_ptrs[box], "")
         dt_time = self._time() - start_time
-        self.oe_socket = False
 
         self.logger.debug("Write to stimrec")
         add_to_stimrec(
