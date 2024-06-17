@@ -193,6 +193,9 @@ class _DataSenderThread(multiprocessing.Process):
         self.stop_stream.set()
         self.thread.join()
 
+    def pause(self):
+        self.stop_stream.set()
+
     def shutdown(self):
         self.stop()
         self.tcpServer.close()

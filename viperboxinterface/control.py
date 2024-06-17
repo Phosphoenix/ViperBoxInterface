@@ -1086,6 +1086,8 @@ reverted to previous settings. Error: {self._er(e)}",
         self.tracking.recording = False
         self._rec_start_time = None
 
+        self.data_thread.pause()
+
         _ = requests.put(self.OE_URL, json={"mode": "ACQUIRE"}, timeout=0.1)
 
         # TODO: combine stim history and recording into some file format
