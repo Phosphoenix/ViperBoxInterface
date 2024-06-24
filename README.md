@@ -51,6 +51,9 @@ To install the software, please follow these steps:
     - Install conda with `conda install -c conda-forge unidep -y`
     - Run `unidep install .`
 - To create a desktop shortcut, navigate to the `setup` folder and right-click the `create_shortcut.ps1` file and select "Run with PowerShell"
+
+### Starting up
+- Use the dekstop shortucut you created
 - OR If you don't have a shortcut, you can start the software with the following steps:
     - Open an Anaconda prompt
     - Activate the environment by running `conda activate viperbox`
