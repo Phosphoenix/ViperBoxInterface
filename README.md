@@ -10,25 +10,38 @@
 ## :books: Table of Contents
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [:desktop_computer: Using the GUI](#desktop_computer-using-the-gui)
-  - [Starting up](#starting-up)
-    - [ViperBox Control usage](#viperbox-control-usage)
-    - [Open Ephys GUI usage](#open-ephys-gui-usage)
-  - [Recording](#recording)
-- [:gear: Settings](#gear-settings)
-  - [Gain settings](#gain-settings)
-  - [References and input settings](#references-and-input-settings)
-  - [Choosing probe electrodes](#choosing-probe-electrodes)
-- [:question: (F)AQ](#question-faq)
-- [:robot: Using the API](#robot-using-the-api)
-- [:hammer_and_wrench: Overview of ViperBox settings](#hammer_and_wrench-overview-of-viperbox-settings)
-- [:memo: Changing settings through XML scripts](#memo-changing-settings-through-xml-scripts)
-  - [RecordingSettings](#recordingsettings)
-  - [Stimulation settings](#stimulation-settings)
+**Table of Contents**  *generated with [DocToc](https://github.com/ktechhub/doctoc)*
+
+<!---toc start-->
+
+* [:brain: ViperBoxInterface](#brain-viperboxinterface)
+  * [:books: Table of Contents](#books-table-of-contents)
+  * [:desktop_computer: Installation and usage](#desktop_computer-installation-and-usage)
+    * [Installation](#installation)
+    * [Starting up](#starting-up)
+    * [ViperBox GUI](#viperbox-gui)
+      * [ViperBox GUI usage](#viperbox-gui-usage)
+      * [Open Ephys GUI usage](#open-ephys-gui-usage)
+    * [Recording data](#recording-data)
+  * [:gear: Settings](#gear-settings)
+    * [Gain settings](#gain-settings)
+    * [References and input settings](#references-and-input-settings)
+    * [Stimulation settings](#stimulation-settings)
+    * [Choosing probe electrodes](#choosing-probe-electrodes)
+  * [:robot: Using the API](#robot-using-the-api)
+  * [:hammer_and_wrench: Changing settings through XML scripts](#hammerandwrench-changing-settings-through-xml-scripts)
+    * [Overview of all settings](#overview-of-all-settings)
+    * [XML recording settings](#xml-recording-settings)
+    * [XML stimulation settings](#xml-stimulation-settings)
+  * [:question: (F)AQ](#question-faq)
+* [Notes](#notes)
+  * [Time](#time)
+
+<!---toc end-->
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 <!-- toc-end -->
 
